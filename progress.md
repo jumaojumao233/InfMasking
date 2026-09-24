@@ -10,11 +10,11 @@
 预期结果：得到当前任务状态、最终 probing 输出和是否出现新的 CUDA 错误；只有出现 `END` 和有效退出码后才进入下一项实验。
 执行规模：3 组远程只读查询、1 次本地进度更新；不修改远端文件，不停止进程，不启动新任务。
 时间区间：约 3—8 分钟，不含任务自然退出等待。
-当前状态：恢复任务仍为 `Running`。训练日志显示 `Trainer.fit` 已达到 `max_epochs=10`；01:00:54 输出 `share` probing 结果 `acc@1=0.959、ROC AUC=0.999`，01:07:20 又输出一条后续 probing 记录；status.log 尚无 `END`，GPU 利用率约 2%，实际 Python 进程仍存活。
-已完成项：确认主机为 `DESKTOP-STVGT1D`；确认 GPU 为 GTX 1080 Ti；确认 PowerShell 启动器、`.venv` Python 和实际 Python311 进程属于同一父子链；确认 checkpoint 最近更新时间为 00:54:17；确认恢复来自原失败 checkpoint；确认当前没有新的 CUDA 堆栈或任务级错误标记。
-未完成项：剩余 probing、恢复任务退出、`END` 标记、最终退出码、retry checkpoint 归档；seed=7 UniGIR 和 seed=123 两组任务尚未启动。
-阻塞与风险：训练已完成但 probing 仍在继续，当前结果不能登记为完整有效运行；GPU 利用率很低而 Python 仍存活，符合逐项 CPU/GPU probing 的状态；停止任务会丢失退出证据，因此暂不干预。
-下一步：继续只读等待任务自然退出；出现 `END EXIT_CODE=0` 后再读取最终日志、复制 checkpoint 并启动 seed=7 UniGIR；如果长时间不退出，再单独诊断收尾阶段。
+当前状态：恢复任务已于 `2026-09-25 01:20:13` 写入 `END`，以 `EXIT_CODE=0` 完成；当前无相关 Python 进程，GPU 仅保留约 317 MiB 显存。retry 已达到 10 epoch 并完成四项 probing。
+已完成项：确认主机为 `DESKTOP-STVGT1D`；确认 GPU 为 GTX 1080 Ti；确认恢复进程属于同一父子链；确认恢复来自原失败 checkpoint；确认没有新的实际 CUDA 错误；记录 share `0.959/0.999`、unique1 `0.806/0.974`、unique2 `0.778/0.969`、synergy `0.534/0.776`，格式为 `acc@1/ROC AUC`。
+未完成项：retry checkpoint 尚未复制回本地并完成 SHA256；seed=7 UniGIR 和 seed=123 两组任务尚未启动；G0 最终 test 结果尚未统一归档。
+阻塞与风险：原始 seed=7 Baseline 失败目录和 retry 目录必须分开保留；retry 已成功完成，但在 checkpoint 哈希核对前不启动下一项任务；当前四项结果只能作为 Baseline seed=7 记录，不能单独形成 UniGIR 方法结论。
+下一步：复制 retry checkpoint 并核对 SHA256；完成后按固定协议启动 seed=7 UniGIR，再启动 seed=123 Baseline 和 UniGIR。
 
 ## 当前任务：整理并上传 GitHub 私有仓库
 

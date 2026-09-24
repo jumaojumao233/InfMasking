@@ -1,12 +1,12 @@
 # Agent 继续推进说明
 
-## 2026-09-25 当前接续状态：G0 seed=7 Baseline 正在断点恢复
+## 2026-09-25 当前接续状态：G0 seed=7 Baseline 恢复完成
 
 G3 MOSI 三 seed 已完成，UniGIR 的 acc@1 和 ROC AUC 在 3/3 个 seed 上高于 Baseline，平均差值为 +0.041 和 +0.037，满足进入 G0 的条件。G0 启动前已核对封存数据清单、脚本哈希和 Baseline/UniGIR 的 Hydra 实际解析。
 
-当前远端任务：seed=42 Baseline 与 UniGIR 已分别以 `EXIT_CODE=0` 完成。原 seed=7 Baseline 于 23:48:57 以 `EXIT_CODE=1` 退出，stderr 报告 BatchNorm 更新处的 `CUDA error: invalid argument`。retry 任务 `InfMasking-G4-G0-s7-Baseline-Retry1-liangyl` 已从原 checkpoint 的 `epoch=2`、`global_step=471` 恢复，状态为 `Running`。不要把原 seed=7 checkpoint 当作完成结果，也不要启动后续任务，直到 retry 写入 `END`。
+当前远端任务：seed=42 Baseline 与 UniGIR 已分别以 `EXIT_CODE=0` 完成。原 seed=7 Baseline 于 23:48:57 以 `EXIT_CODE=1` 退出，stderr 报告 BatchNorm 更新处的 `CUDA error: invalid argument`。retry 任务 `InfMasking-G4-G0-s7-Baseline-Retry1-liangyl` 已从原 checkpoint 的 `epoch=2`、`global_step=471` 恢复，并于 01:20:13 以 `EXIT_CODE=0` 完成。最终 probing 为 share `0.959/0.999`、unique1 `0.806/0.974`、unique2 `0.778/0.969`、synergy `0.534/0.776`。原 seed=7 失败 checkpoint 不作为完成结果使用。
 
-接续动作：只读检查 retry 的 stdout/stderr、GPU 和 `END`；成功后建立新的串行队列启动 seed=7 UniGIR、seed=123 Baseline、seed=123 UniGIR。六个有效结果必须在单张 GTX 1080 Ti 上串行运行，失败目录和 retry 目录分别保留。
+接续动作：先复制 retry checkpoint 并完成 SHA256 核对，然后建立新的串行队列启动 seed=7 UniGIR、seed=123 Baseline、seed=123 UniGIR。六个有效结果必须在单张 GTX 1080 Ti 上串行运行，失败目录和 retry 目录分别保留。
 
 ## 2026-09-24 当前接续状态：G3 MOSI 多 seed 完成，准备进入 G0
 

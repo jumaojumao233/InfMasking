@@ -1,5 +1,21 @@
 # 项目进度
 
+## 当前任务：只读检查 winpc G0 seed=7 Baseline 恢复任务
+
+任务名：检查 winpc 上 G0 seed=7 Baseline 恢复任务的实时进程、GPU、计划任务、checkpoint 和文本日志。
+启动时间：2026-09-25 01:01（Asia/Shanghai）
+目标：确认恢复任务是否已经完成，判断是否可以继续启动 seed=7 UniGIR。
+目的：避免把已经完成训练但尚未退出的任务误记为成功，也避免在同一 GPU 上重复启动实验。
+做法：通过 `ssh winpc` 使用只读 PowerShell 查询主机、GPU、进程父子关系、计划任务、checkpoint 更新时间和明确的 stdout/stderr/status 日志。
+预期结果：得到当前任务状态、最终 probing 输出和是否出现新的 CUDA 错误；只有出现 `END` 和有效退出码后才进入下一项实验。
+执行规模：3 组远程只读查询、1 次本地进度更新；不修改远端文件，不停止进程，不启动新任务。
+时间区间：约 3—8 分钟，不含任务自然退出等待。
+当前状态：恢复任务仍为 `Running`。训练日志显示 `Trainer.fit` 已达到 `max_epochs=10`，01:00:54 输出 probing 结果 `acc@1=0.959、ROC AUC=0.999`；但 status.log 尚无 `END`，GPU 利用率为 0%，实际 Python 进程仍存活并占用约 1.29 GB 内存。
+已完成项：确认主机为 `DESKTOP-STVGT1D`；确认 GPU 为 GTX 1080 Ti；确认 PowerShell 启动器、`.venv` Python 和实际 Python311 进程属于同一父子链；确认 checkpoint 最近更新时间为 00:54:17；确认恢复来自原失败 checkpoint；确认当前没有新的 CUDA 堆栈或任务级错误标记。
+未完成项：恢复任务退出、`END` 标记、最终退出码、retry checkpoint 归档；seed=7 UniGIR 和 seed=123 两组任务尚未启动。
+阻塞与风险：训练和 probing 已输出，但任务未退出，当前结果不能登记为完整有效运行；GPU 空闲而 Python 仍存活，可能处于评测收尾或进程等待；停止任务会丢失退出证据，因此暂不干预。
+下一步：继续只读等待任务自然退出；出现 `END EXIT_CODE=0` 后再读取最终日志、复制 checkpoint 并启动 seed=7 UniGIR；如果长时间不退出，再单独诊断收尾阶段。
+
 ## 当前任务：整理并上传 GitHub 私有仓库
 
 任务名：在不影响 winpc 训练任务的前提下，将当前项目整理后上传到 GitHub 私有仓库。

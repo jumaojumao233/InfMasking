@@ -1,28 +1,28 @@
 {
     "mimic": {
-        "path": "/path/to/mimic/im.pk"
+        "path": "dataset/data/mimic/im.pk"
     },
     "mosi": {
-        "path": "/path/to/mosi/mosi_data.pkl"
+        "path": "dataset/data/mosi/mosi_data.pkl"
     },
     "humor": {
-        "path": "/path/to/humor/humor.pkl"
+        "path": "dataset/data/humor/humor.pkl"
     },
     "sarcasm": {
-        "path": "/path/to/sarcasm/sarcasm.pkl"
+        "path": "dataset/data/sarcasm/sarcasm.pkl"
     },
     "visionandtouch": {
-        "path": "/path/to/visionandtouch/triangle_real_data"
+        "path": "dataset/data/visionandtouch/triangle_real_data"
     },
     "mmimdb": {
-        "path": "/path/to/mmimdb",
-        "metadata": "/path/to/mmimdb"
+        "path": "dataset/data/mmimdb",
+        "metadata": "dataset/data/mmimdb"
     },
     "hateful_memes": {
-        "path": "/path/to/hateful_memes",
-        "metadata": "/path/to/hateful_memes"
+        "path": "dataset/data/hateful_memes",
+        "metadata": "dataset/data/hateful_memes"
     },
     "trifeatures": {
-        "path": "/path/to/trifeatures_3combi"
+        "path": "dataset/data/trifeatures_3combi"
     }
 }

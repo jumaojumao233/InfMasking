@@ -1,0 +1,34 @@
+# Python environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+
+# Generated data and training artifacts
+dataset/data/
+InfMasking/
+outputs/
+*.ckpt
+*.ckpt.partial
+events.out.tfevents.*
+
+# Runtime logs
+*.log
+diagnostic_logs/
+probe_logs/
+overnight_logs/
+seed7_logs/
+seed7_noqueue_logs/
+gpu_pilot_logs/
+
+# Local tool state
+.claude/
+.codex/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.DS_Store
+
+# Conversation exports and temporary transfers
+ccDsForUniGIR.txt
+*.partial
+*.tmp

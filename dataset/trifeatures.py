@@ -20,6 +20,7 @@ class TrifeaturesDataModule(LightningDataModule):
                  batch_size: int = 32,
                  num_workers: int = 0,
                  augment: Optional[Tuple[str]] = None,
+                 data_root: Optional[str] = None,
                  **kwargs):
         """
         :param model: {'Sup', 'CLIP', 'CrossSelf', 'CoMM', 'InfMasking'}
@@ -31,6 +32,7 @@ class TrifeaturesDataModule(LightningDataModule):
         :param dataset: either "bimodal" or "unimodal"
         :param batch_size: Batch size to pass to Dataloaders
         :param num_workers: Number of workers to pass to Dataloaders
+        :param data_root: Optional dataset root. If omitted, use catalog.json.
         :param kwargs: keywords args given to Trifeatures/BimodalTrifeatures dataset
         """
         super().__init__()
@@ -41,7 +43,7 @@ class TrifeaturesDataModule(LightningDataModule):
         catalog_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "catalog.json")
         with open(catalog_path) as f:
             self.catalog = json.load(f)
-        root = self.catalog["trifeatures"]["path"]
+        root = data_root or self.catalog["trifeatures"]["path"]
 
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                          std=[0.229, 0.224, 0.225])
@@ -737,4 +739,3 @@ class BimodalTrifeaturesMMSSL(BimodalTrifeatures):
             aug22 = self.augment(img2)
 
         return [aug11, aug21], [aug12, aug22]
-

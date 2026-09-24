@@ -3,10 +3,11 @@ import torch
 import torch.nn as nn
 from utils import all_gather_batch_with_grad
 from losses.entropy import entropy_gradeint
+from losses.prototype_alignment import PrototypeAlignment
 
 class InfMaskingLoss(nn.Module):
     def __init__(self, temperature=0.1, weights=None, cross=False, only_mask_last=False,
-                 mask_lambda=0.25,penalty=None):
+                 mask_lambda=0.25,penalty=None, profile_kwargs=None):
         super().__init__()
         self.temperature = temperature
         self.weights = weights
@@ -15,6 +16,8 @@ class InfMaskingLoss(nn.Module):
         self.INF = 1e8
         self.penalty = penalty
         self.only_mask_last = only_mask_last
+        # [UniGIR] optional global relational-profile alignment
+        self.profile = PrototypeAlignment(**profile_kwargs) if profile_kwargs else None
 
     def infonce(self, z1, z2): # InfoNCE Loss
         N = len(z1)
@@ -83,10 +86,10 @@ class InfMaskingLoss(nn.Module):
         logits /= self.temperature
         
         # compute the masklabel
-        labels = torch.zeros(logits.shape[0], dtype=torch.long).cuda()
+        labels = torch.zeros(logits.shape[0], dtype=torch.long, device=logits.device)
         mask_loss = 0.5 * torch.bmm(torch.bmm(q.reshape(B, 1, E), k_sigma), q.reshape(B, E, 1)).mean() / self.temperature
 
-        criterion = nn.CrossEntropyLoss().cuda()
+        criterion = nn.CrossEntropyLoss().to(logits.device)
         cls_loss = criterion(logits, labels)
 
         return mask_loss + cls_loss
@@ -158,19 +161,51 @@ class InfMaskingLoss(nn.Module):
             loss4, acc2 = self.infonce(z2[i], z1[prototype]) # z‘
             loss.append((loss3 + loss4) / 2.)
             acc.append((acc1 + acc2) / 2.)
+
+        # [UniGIR] global relational-profile alignment (optional branch)
+        profile_acc = None
+        profile_out = None
+        if self.profile is not None:
+            # masked views (list of T tensors) must recover the global profile
+            # (prototype codes) of the complete view of the *same* sample
+            profile_out = self.profile(z1[prototype], mask_out1,
+                                       z2[prototype], mask_out2)
+            if profile_out is not None:
+                profile_acc = profile_out["acc"]
+
         ssl_acc = {"ssl_acc_%i"%i: acc_ for i, acc_ in enumerate(acc)}
         losses = {"ssl_loss_%i"%i: l for i, l in enumerate(loss)}
 
         if self.weights is not None:
-            loss = torch.mean(torch.stack(loss) * torch.tensor(self.weights, device=z1[0].device))
+            base_loss = torch.mean(torch.stack(loss) * torch.tensor(self.weights, device=z1[0].device))
         else:
-            loss = torch.mean(torch.stack(loss)) 
+            base_loss = torch.mean(torch.stack(loss))
+        total_loss = base_loss
+        output_extra = {}
+        if profile_out is not None:
+            # Explicit alpha: L = L_InfMasking + alpha * L_profile.
+            profile_loss = profile_out["loss"] * self.profile.loss_weight
+            total_loss = base_loss + profile_loss
+            output_extra = {
+                "loss_base": base_loss.detach(),
+                "loss_profile": profile_loss.detach(),
+                "profile_kl": profile_out["kl"].detach(),
+                "profile_usage_entropy": profile_out["usage_entropy"].detach(),
+                "profile_active_prototypes": profile_out["active_prototypes"].detach(),
+                "profile_target_entropy": profile_out["target_entropy"].detach(),
+                "profile_target_confidence": profile_out["target_confidence"].detach(),
+                "profile_prediction_usage_entropy": profile_out["prediction_usage_entropy"].detach(),
+                "profile_prototype_mean_abs_cosine": profile_out["prototype_mean_abs_cosine"].detach(),
+            }
         if self.penalty is not None:
-            loss -= self.penalty*loss_uniform
+            total_loss -= self.penalty*loss_uniform
 
         acc = torch.mean(torch.stack(acc))
-       
-        return {"loss": loss, "ssl_acc": acc, **ssl_acc, **losses}
+
+        output = {"loss": total_loss, "ssl_acc": acc, **ssl_acc, **losses, **output_extra}
+        if profile_acc is not None:
+            output["ssl_acc_profile"] = profile_acc
+        return output
 
     def __str__(self):
         return "{}(temp={})".format(type(self).__name__, self.temperature)

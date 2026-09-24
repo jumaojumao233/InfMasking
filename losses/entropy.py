@@ -23,7 +23,7 @@ def com_score(keys,eta=0.01):
    x_row=torch.unsqueeze(keys,-2)
    diff =x_row/tau
    grad_x =torch.sum(Gram.unsqueeze(-1)*diff,-2)
-   Gram_ivs=torch.inverse(Gram+eta*torch.eye(batch_size).cuda())
+   Gram_ivs=torch.inverse(Gram+eta*torch.eye(batch_size, device=keys.device))
 
    dlog_q= -torch.einsum('ik,kj->ij',[Gram_ivs,grad_x])
    return  dlog_q

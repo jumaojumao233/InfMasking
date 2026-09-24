@@ -1,0 +1,43 @@
+name: InfMasking
+
+# UniGIR V2 (self-contained): InfMasking + global relational-profile alignment.
+# Uses the exact same model & loss as `infmasking.yaml`, but activates the
+# optional PrototypeAlignment branch inside InfMaskingLoss through
+# `loss_kwargs.profile_kwargs`. Everything else (encoder, projection, loss
+# hyper-parameters) is untouched, so gains are attributable to the profile loss.
+
+model:
+  _target_: pl_modules.infmasking.InfMasking
+  encoder: # Multi-modal model to be trained
+    _target_: models.inffusion.InfFusion
+    embed_dim: 40
+    fusion: "concat"
+    pool: "cls"
+    n_heads: 8
+    n_layers: 1
+    add_bias_kv: False
+    dropout: 0
+    mask_ratio: 0.7
+    num_mask: 6
+
+  projection: # Projection head
+    _target_: pl_modules.infmasking.InfMasking._build_mlp
+    in_dim: ${model.model.encoder.embed_dim}
+    mlp_dim: 512
+    out_dim: 256
+
+  loss_kwargs: # InfMasking loss
+    temperature: 0.1
+    mask_lambda: 1
+    profile_kwargs:
+      dim: 256        # == projection out_dim (embeddings live in this space)
+      num_prototypes: 128
+      temperature: 0.1
+      sinkhorn_iters: 3
+      sinkhorn_eps: 0.05
+      update_rate: 0.05
+      loss_weight: 0.25
+      cross: false
+      shuffle_targets: false
+      queue_size: 1024
+      init_seed: ${seed}

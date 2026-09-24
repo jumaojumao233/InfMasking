@@ -98,6 +98,7 @@ class Affect(Dataset):
     def _download_file(self):
         """Download file from Google Drive using gdown."""
         print(f"Downloading {os.path.basename(self.data_path)} from Google Drive...")
+        os.makedirs(os.path.dirname(self.data_path), exist_ok=True)
         url = f"https://drive.google.com/uc?id={self.FILE_IDS[self.dataset]}"
         gdown.download(url, self.data_path, quiet=False)
         print(f"Download completed: {self.data_path}")
@@ -172,5 +173,4 @@ def collate_fn_timeseries(inputs: List, max_seq_length: int = None):
                                   "constant", 0)
             X_padded.append(Xi_padded)
     return X_padded
-
 

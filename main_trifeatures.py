@@ -1,7 +1,6 @@
 from omegaconf import DictConfig
 import hydra
 from hydra.utils import instantiate
-import numpy as np
 import os
 import torch
 import torch.nn.parallel
@@ -9,6 +8,7 @@ import torch.optim
 import torch.utils.data
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import Callback, ModelCheckpoint, EarlyStopping
+from pytorch_lightning import seed_everything
 from evaluation.linear_probe import LinearProbingCallback
 
 # pass the current epoch and total epochs to the model
@@ -34,9 +34,8 @@ def main(cfg: DictConfig):
         - InfMasking
     """
 
-    # fix the seed for repro
-    torch.manual_seed(cfg.seed)
-    np.random.seed(cfg.seed)
+    # Seed Python, NumPy, Torch and DataLoader workers consistently.
+    seed_everything(int(cfg.seed), workers=True)
 
     # create model + save hyper-parameters
     kwargs = dict()
@@ -67,46 +66,68 @@ def main(cfg: DictConfig):
     # Data loading code
     data_module = instantiate(cfg.data.data_module, model=cfg.model.name)
 
-    # Linear probing on each tasks from BimodalTrifeatures
+    # Linear probing on each task can be disabled for low-cost diagnostics.
+    enable_linear_probe = getattr(cfg, "enable_linear_probe", True)
     downstream_names = ["share", "unique1", "unique2", "synergy"]
     downstream_data_modules = [instantiate(cfg.data.data_module, model="Sup", biased=False, task=t)
-                               for t in downstream_names]
-    logger = TensorBoardLogger(build_root_dir(cfg), name="logs")
+                               for t in downstream_names] if enable_linear_probe else []
+    experiment_root = os.path.abspath(build_root_dir(cfg))
+    checkpoint_dir = resolve_checkpoint_dir(cfg, experiment_root)
+    logger_version = int(getattr(cfg, "logger_version", 0))
+    logger = TensorBoardLogger(
+        save_dir=experiment_root,
+        name="logs",
+        version=logger_version,
+    )
 
-    # Checkpoint callback
-    checkpoint_callback = ModelCheckpoint(
-        # dirpath=build_root_dir(cfg),  
-        dirpath=os.path.join(logger.log_dir, "checkpoints"), 
-        filename='{epoch:02d}-{acc1:.4f}', 
-        save_top_k=1,  
-        monitor='acc1',
-        mode='max',  
-    )       
+    probe_frequency = getattr(cfg, "probe_frequency", "by_fit")
+    checkpoint_monitor = getattr(cfg, "checkpoint_monitor", None)
+    checkpoint_mode = getattr(cfg, "checkpoint_mode", "max")
+    enable_early_stopping = getattr(cfg, "enable_early_stopping", False)
+    if checkpoint_monitor is not None and probe_frequency != "by_epoch":
+        raise ValueError("Metric-based checkpointing requires probe_frequency=by_epoch")
+    if enable_early_stopping and checkpoint_monitor is None:
+        raise ValueError("Early stopping requires checkpoint_monitor")
 
-    # Early stopping callback
-    early_stopping_callback = EarlyStopping(
-        monitor='acc1', 
-        patience=10,  
-        verbose=True, 
-        mode='max' 
-    )                   
+    checkpoint_callback = build_checkpoint_callback(
+        checkpoint_dir,
+        checkpoint_monitor=checkpoint_monitor,
+        checkpoint_mode=checkpoint_mode,
+    )
+
+    early_stopping_callback = None
+    if enable_early_stopping:
+        early_stopping_callback = EarlyStopping(
+            monitor=checkpoint_monitor,
+            patience=int(getattr(cfg, "early_stopping_patience", 10)),
+            verbose=True,
+            mode=checkpoint_mode,
+        )
     # Trainer + fit
+    callbacks = build_training_callbacks(
+        cfg,
+        downstream_data_modules,
+        checkpoint_callback,
+        probe_frequency,
+        early_stopping_callback,
+    )
     trainer = instantiate(
         cfg.trainer,
-        default_root_dir=build_root_dir(cfg),
-        logger=[TensorBoardLogger(build_root_dir(cfg), name="logs")],
-        callbacks=[
-            EpochInfoCallback(),
-            TotalEpochsCallback(),
-            LinearProbingCallback(downstream_data_modules,
-                                         names=downstream_names,
-                                         val_loaders=False), # if False, split the val from the train set
-                                         early_stopping_callback,
-                                         checkpoint_callback],
+        default_root_dir=experiment_root,
+        logger=logger,
+        callbacks=callbacks,
     )
 
     if cfg.mode == "train":
-        trainer.fit(model, datamodule=data_module)
+        resume_ckpt_path = resolve_resume_ckpt_path(cfg, checkpoint_dir)
+        print(f"Experiment root: {experiment_root}")
+        print(f"Checkpoint directory: {checkpoint_dir}")
+        print(f"Resume checkpoint: {resume_ckpt_path or 'none'}")
+        trainer.fit(
+            model,
+            datamodule=data_module,
+            ckpt_path=resume_ckpt_path,
+        )
     else:
         trainer.test(model, datamodule=data_module, ckpt_path=getattr(cfg, "ckpt_path", None))
 
@@ -126,6 +147,70 @@ def build_root_dir(cfg: DictConfig):
         root_dir = os.path.join(root_dir, cfg.exp_name)
 
     return root_dir
+
+
+def resolve_checkpoint_dir(cfg: DictConfig, experiment_root: str) -> str:
+    """Return the stable checkpoint directory for one experiment."""
+    configured_dir = getattr(cfg, "checkpoint_dir", None)
+    if configured_dir in (None, ""):
+        configured_dir = os.path.join(experiment_root, "checkpoints")
+    return os.path.abspath(os.path.expanduser(str(configured_dir)))
+
+
+def build_checkpoint_callback(
+        checkpoint_dir: str,
+        checkpoint_monitor=None,
+        checkpoint_mode: str = "max") -> ModelCheckpoint:
+    """Build a callback that always keeps the latest epoch checkpoint."""
+    checkpoint_kwargs = dict(
+        dirpath=checkpoint_dir,
+        every_n_epochs=1,
+        save_on_train_epoch_end=True,
+        save_last=True,
+        monitor=checkpoint_monitor,
+        mode=checkpoint_mode,
+    )
+    if checkpoint_monitor is None:
+        checkpoint_kwargs.update(filename="{epoch:02d}", save_top_k=0)
+    else:
+        checkpoint_kwargs.update(
+            filename="{epoch:02d}-{" + checkpoint_monitor + ":.4f}",
+            auto_insert_metric_name=False,
+            save_top_k=1,
+        )
+    return ModelCheckpoint(**checkpoint_kwargs)
+
+
+def build_training_callbacks(
+        cfg: DictConfig,
+        downstream_data_modules,
+        checkpoint_callback: ModelCheckpoint,
+        probe_frequency: str,
+        early_stopping_callback=None):
+    """Keep checkpointing independent from optional linear probing."""
+    callbacks = [EpochInfoCallback(), TotalEpochsCallback(), checkpoint_callback]
+    if getattr(cfg, "enable_linear_probe", True):
+        callbacks.append(
+            LinearProbingCallback(
+                downstream_data_modules,
+                names=["share", "unique1", "unique2", "synergy"],
+                val_loaders=False,
+                frequency=probe_frequency,
+            )
+        )
+        if getattr(cfg, "enable_early_stopping", False):
+            callbacks.append(early_stopping_callback)
+    return callbacks
+
+
+def resolve_resume_ckpt_path(cfg: DictConfig, checkpoint_dir: str):
+    """Prefer an explicitly supplied checkpoint, otherwise resume from last.ckpt."""
+    configured_path = getattr(cfg, "resume_ckpt_path", None)
+    if configured_path not in (None, ""):
+        return os.path.abspath(os.path.expanduser(str(configured_path)))
+
+    last_checkpoint = os.path.join(checkpoint_dir, "last.ckpt")
+    return last_checkpoint if os.path.isfile(last_checkpoint) else None
 
 
 if __name__ == '__main__':

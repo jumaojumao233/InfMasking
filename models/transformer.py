@@ -6,8 +6,6 @@ import torch.nn as nn
 from einops import rearrange
 from torch.nn.init import xavier_uniform_
 from typing import Optional, List
-from sentence_transformers import SentenceTransformer
-from sentence_transformers.util import batch_to_device
 #Local import
 from utils import TextMasking
 from models.input_adapters import build_1d_sincos_posemb
@@ -94,6 +92,8 @@ class LanguageEncoder(nn.Module):
         """
 
         super().__init__()
+        from sentence_transformers import SentenceTransformer
+
         assert output_value in {"token_embeddings", "sentence_embedding"}
 
         self.model = SentenceTransformer(model_name)
@@ -124,7 +124,7 @@ class LanguageEncoder(nn.Module):
                     if txt in self._cache[self.model_name]:
                         embed.append(self._cache[self.model_name][txt])
                 if len(embed) == len(x):
-                    x = torch.stack(embed, dim=0).cuda()
+                    x = torch.stack(embed, dim=0).to(self.model.device)
                     if self.normalize_embeddings:
                         x = torch.nn.functional.normalize(x, p=2, dim=1)
                     return x
@@ -132,6 +132,8 @@ class LanguageEncoder(nn.Module):
         features = self.model.tokenize(x) # automatically truncate too large sentences
         if self.training: # only apply masking in training mode
             features["input_ids"] = self.mask(features["input_ids"])
+        from sentence_transformers.util import batch_to_device
+
         features = batch_to_device(features, self.model.device)
         if self.freeze:
             with torch.no_grad():

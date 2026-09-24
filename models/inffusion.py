@@ -130,7 +130,7 @@ class FusionTransformer(nn.Module):
             self.mask_tokens = nn.Parameter(torch.zeros(1, 1, width))
             self._trunc_normal_(self.mask_tokens, std=.02)
         else:
-            self.mask_tokens = torch.zeros(1, 1, width).cuda()
+            self.register_buffer('mask_tokens', torch.zeros(1, 1, width), persistent=False)
 
     def _trunc_normal_(self, tensor, mean=0., std=1.):
         trunc_normal_(tensor, mean=mean, std=std, a=-std, b=std)

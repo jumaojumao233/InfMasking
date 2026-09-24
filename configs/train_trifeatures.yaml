@@ -1,17 +1,26 @@
 seed: 42
 mode: "train"
+enable_linear_probe: true
+probe_frequency: "by_fit"
+checkpoint_monitor: null
+checkpoint_mode: "max"
+checkpoint_dir: null
+resume_ckpt_path: null
+logger_version: 0
+enable_early_stopping: false
+early_stopping_patience: 10
 
 
 trainer:
   _target_: pytorch_lightning.Trainer
   accelerator: "auto" # Accelerator given to pytorch-lightning Trainer (eg `cpu` or `gpu`)
-  strategy: "ddp"
-  devices: "auto"
+  strategy: "auto"
+  devices: 1
   num_nodes: 1 # Number of distributed nodes
   max_epochs: 100
   default_root_dir: "."
   use_distributed_sampler: false
-  deterministic: false
+  deterministic: true
   check_val_every_n_epoch: 1
   num_sanity_val_steps: 1
   inference_mode: false # avoid weird bugs during linear probing

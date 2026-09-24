@@ -102,6 +102,7 @@ class LinearProbingCallback(Callback):
 
             if log:
                 pl_module.log_dict(dict(scores), on_epoch=True, sync_dist=True)
+            return dict(scores)
     
     def val_linear_probing(self,  trainer: Trainer, pl_module: LightningModule, log: bool = True):
         if trainer.global_rank == 0:
@@ -137,6 +138,7 @@ class LinearProbingCallback(Callback):
 
             if log:
                 pl_module.log_dict(dict(scores), on_epoch=True, sync_dist=True)
+            return dict(scores)
 
     def on_validation_epoch_end(self, trainer: Trainer, pl_module: LightningModule):
         if self.frequency == "by_epoch":
@@ -144,7 +146,11 @@ class LinearProbingCallback(Callback):
 
     def on_fit_end(self, trainer: Trainer, pl_module: LightningModule):
         if self.frequency == "by_fit":
-            self.val_linear_probing(trainer, pl_module, log=False)
+            scores = self.val_linear_probing(trainer, pl_module, log=False)
+            if scores and trainer.logger is not None:
+                trainer.logger.log_metrics(
+                    {"final_%s" % key: float(value) for key, value in scores.items()},
+                    step=trainer.global_step)
 
     def on_test_start(self, trainer: Trainer, pl_module: LightningModule):
         self.linear_probing(trainer, pl_module)
@@ -372,7 +378,10 @@ def test_linear_probe(
         acc_per_class = MulticlassAccuracy(num_classes=NUM_C, average=None).to(test_feats.device)
         acc5 = MulticlassAccuracy(num_classes=NUM_C, average=average,
                                   top_k=min(NUM_C, 5)).to(test_feats.device)
-        roc_auc = AUROC(task="multiclass", num_classes=NUM_C).to(test_feats.device)
+        # TorchMetrics' multiclass AUROC uses cumsum. On CUDA, that kernel has
+        # no deterministic implementation in the PyTorch version used by the
+        # project, so keep this metric on CPU when deterministic training is on.
+        roc_auc = AUROC(task="multiclass", num_classes=NUM_C).cpu()
         if use_sklearn:
             predictions = torch.as_tensor(linear_classifier.predict_proba(test_feats.cpu().numpy())).to(device)
         else:
@@ -380,7 +389,7 @@ def test_linear_probe(
         accuracy1 = float(acc1(torch.as_tensor(predictions), test_labels))
         accuracy5 = float(acc5(torch.as_tensor(predictions), test_labels))
         accuracy_per_class = [float(x) for x in acc_per_class(torch.as_tensor(predictions), test_labels)]
-        auc = float(roc_auc(torch.as_tensor(predictions), test_labels))
+        auc = float(roc_auc(torch.as_tensor(predictions).detach().cpu(), test_labels.detach().cpu()))
         logger.info(f"Test acc@1/acc@5/acc_per_class/roc_auc: {accuracy1:.3f}/{accuracy5:.3f}/{accuracy_per_class}/{auc}")
         return {"acc1": accuracy1, "acc5": accuracy5, "roc_auc": auc}
 

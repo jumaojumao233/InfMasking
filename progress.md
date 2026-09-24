@@ -10,10 +10,10 @@
 预期结果：得到当前任务状态、最终 probing 输出和是否出现新的 CUDA 错误；只有出现 `END` 和有效退出码后才进入下一项实验。
 执行规模：3 组远程只读查询、1 次本地进度更新；不修改远端文件，不停止进程，不启动新任务。
 时间区间：约 3—8 分钟，不含任务自然退出等待。
-当前状态：恢复任务仍为 `Running`。训练日志显示 `Trainer.fit` 已达到 `max_epochs=10`，01:00:54 输出 probing 结果 `acc@1=0.959、ROC AUC=0.999`；但 status.log 尚无 `END`，GPU 利用率为 0%，实际 Python 进程仍存活并占用约 1.29 GB 内存。
+当前状态：恢复任务仍为 `Running`。训练日志显示 `Trainer.fit` 已达到 `max_epochs=10`；01:00:54 输出 `share` probing 结果 `acc@1=0.959、ROC AUC=0.999`，01:07:20 又输出一条后续 probing 记录；status.log 尚无 `END`，GPU 利用率约 2%，实际 Python 进程仍存活。
 已完成项：确认主机为 `DESKTOP-STVGT1D`；确认 GPU 为 GTX 1080 Ti；确认 PowerShell 启动器、`.venv` Python 和实际 Python311 进程属于同一父子链；确认 checkpoint 最近更新时间为 00:54:17；确认恢复来自原失败 checkpoint；确认当前没有新的 CUDA 堆栈或任务级错误标记。
-未完成项：恢复任务退出、`END` 标记、最终退出码、retry checkpoint 归档；seed=7 UniGIR 和 seed=123 两组任务尚未启动。
-阻塞与风险：训练和 probing 已输出，但任务未退出，当前结果不能登记为完整有效运行；GPU 空闲而 Python 仍存活，可能处于评测收尾或进程等待；停止任务会丢失退出证据，因此暂不干预。
+未完成项：剩余 probing、恢复任务退出、`END` 标记、最终退出码、retry checkpoint 归档；seed=7 UniGIR 和 seed=123 两组任务尚未启动。
+阻塞与风险：训练已完成但 probing 仍在继续，当前结果不能登记为完整有效运行；GPU 利用率很低而 Python 仍存活，符合逐项 CPU/GPU probing 的状态；停止任务会丢失退出证据，因此暂不干预。
 下一步：继续只读等待任务自然退出；出现 `END EXIT_CODE=0` 后再读取最终日志、复制 checkpoint 并启动 seed=7 UniGIR；如果长时间不退出，再单独诊断收尾阶段。
 
 ## 当前任务：整理并上传 GitHub 私有仓库

@@ -1,12 +1,12 @@
 # Agent 继续推进说明
 
-## 2026-09-25 当前接续状态：G0 seed=7 Baseline 恢复完成
+## 2026-09-25 当前接续状态：G0 seed=7 UniGIR 正在运行
 
 G3 MOSI 三 seed 已完成，UniGIR 的 acc@1 和 ROC AUC 在 3/3 个 seed 上高于 Baseline，平均差值为 +0.041 和 +0.037，满足进入 G0 的条件。G0 启动前已核对封存数据清单、脚本哈希和 Baseline/UniGIR 的 Hydra 实际解析。
 
 当前远端任务：seed=42 Baseline 与 UniGIR 已分别以 `EXIT_CODE=0` 完成。原 seed=7 Baseline 于 23:48:57 以 `EXIT_CODE=1` 退出，stderr 报告 BatchNorm 更新处的 `CUDA error: invalid argument`。retry 任务 `InfMasking-G4-G0-s7-Baseline-Retry1-liangyl` 已从原 checkpoint 的 `epoch=2`、`global_step=471` 恢复，并于 01:20:13 以 `EXIT_CODE=0` 完成。最终 probing 为 share `0.959/0.999`、unique1 `0.806/0.974`、unique2 `0.778/0.969`、synergy `0.534/0.776`。原 seed=7 失败 checkpoint 不作为完成结果使用。
 
-接续动作：先复制 retry checkpoint 并完成 SHA256 核对，然后建立新的串行队列启动 seed=7 UniGIR、seed=123 Baseline、seed=123 UniGIR。六个有效结果必须在单张 GTX 1080 Ti 上串行运行，失败目录和 retry 目录分别保留。
+接续动作：retry checkpoint 已复制回本地，远端和本地 SHA256 均为 `C47E587F5A70CAFD534B88B5229B1661166B01930073A0F49244504E92F370A5`。seed=7 UniGIR 已于 07:05:05 进入 `Running`，使用 G0 封存数据、pair seed=42、model seed=7、10 epoch、queue=1024、linear probing 和独立运行目录。训练结束后先检查 `END`、退出码和 probing，再启动 seed=123 Baseline；所有任务仍须在单张 GTX 1080 Ti 上串行运行。
 
 ## 2026-09-24 当前接续状态：G3 MOSI 多 seed 完成，准备进入 G0
 

@@ -18,15 +18,15 @@
 
 时间区间：本地修改与远端预检约 5—10 分钟；smoke 运行约 5—15 分钟，不含 GPU 排队和下载等待。
 
-当前状态：V3 smoke 已完成，退出码为 0，`last.ckpt` 存在；图指标已写入 TensorBoard，当前准备启动 V2/V3 固定协议短跑。
+当前状态：V3 smoke 已完成，退出码为 0，`last.ckpt` 存在；图指标已写入 TensorBoard。G5 V2-Cosine 短跑正在 winpc 运行，G5 watchdog 已注册为每 15 分钟检查，V3 等待 V2 成功后自动启动。
 
 已完成项：V2 梯度冲突诊断完成；V3 测地原型轮廓代码、单元测试和 Hydra 配置解析通过；winpc 远端环境已有可用的 V3 代码和测试。
 
-未完成项：V2/V3 固定协议短跑尚未完成；正式性能比较和多 seed 复现尚未开始。
+未完成项：V2-Cosine 尚未写入 `END`；V3-Geodesic 短跑尚未启动；V2/V3 正式性能比较和多 seed 复现尚未开始。
 
-阻塞与风险：V3 还没有性能结论；原型图的连通性和不可达 pair 需要由 smoke 日志确认；smoke 若失败，后续对照实验暂停，只修复运行正确性问题。
+阻塞与风险：V3 还没有性能结论；V2 当前已生成 checkpoint 但仍在收尾，不能依据中间 checkpoint 判断结果；若任一任务失败、CUDA 报错或 checkpoint 缺失，watchdog 会停止后续任务。
 
-下一步：用相同的 G0 数据、seed=42、10 epoch、`max_size=10000` 和 probing 协议串行运行 V2-Cosine 与 V3-Geodesic；若任一任务失败或 checkpoint 缺失，watchdog 停止后续任务。
+下一步：等待 V2 正常退出并核对 `END` 与 checkpoint，再由 watchdog 自动启动 V3；两项完成后统一读取 TensorBoard、synergy、unique2 和四任务平均指标，再决定是否扩展 seed。
 
 ## 当前任务：审计完整 UniGIR idea 并启动 V2 梯度冲突诊断
 

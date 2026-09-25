@@ -1,5 +1,47 @@
 # 项目进度
 
+## 当前任务：审计完整 UniGIR idea 并启动 V2 梯度冲突诊断
+
+任务名：核对 UniGIR V2 与 V3 测地轮廓的实现边界，先完成 V2 unique2 退化的梯度冲突诊断。
+
+启动时间：2026-09-25
+
+目标：判断用户提出的三层 UniGIR idea 是否与当前代码和实验一致，明确当前项目处于 V2 还是 V3；在实现 V3 之前，建立只读的梯度诊断，分别计算 `L_InfMasking` 和加权 `L_profile` 在共享 encoder/head 参数上的梯度方向、范数和冲突比例。
+
+目的：避免把尚未实现的测地原型轮廓写成当前结果，也避免在没有解释 unique2 退化前直接进入 V3 或长训练。
+
+做法：读取 `PrototypeAlignment`、`InfMaskingLoss`、训练入口、诊断脚本和结果文档；审计公式、prototype/graph 更新、Sinkhorn 目标和 GeoMM 区分；给损失增加可选的 component loss 输出；新增只读梯度冲突诊断脚本和最小测试；完成静态检查后，再在 winpc 上运行小规模诊断，不启动训练队列。
+
+预期结果：得到一份 V2/V3 边界和测地版本实现约束说明；生成可按 checkpoint 和 batch 汇总的梯度冲突诊断结果，为是否实现 V3 提供依据。
+
+执行规模：修改 2 个损失文件，新增 1 个 V3 配置、2 个诊断/实现脚本、2 个测试文件和 1 个研究文档，更新 5 个研究记录文件和本进度；不修改 checkpoint、数据和训练结果；代码约 500—700 行，token 量级约 15k—20k。
+
+时间区间：本地实现与静态验证约 30—50 分钟；winpc 诊断运行时间另计，不含排队与等待。
+
+当前状态：已完成 idea 审计、V2 三 seed 梯度诊断、V3 第一版代码实现、远端测试、研究记录更新、最终检查和提交前整理。
+
+已完成项：
+
+- 确认 InfMasking 三层主干和 V2 余弦 prototype profile 已实现。
+- 确认当前没有原型 k-NN 图、最短路径或 geodesic profile 实现。
+- 确认 G0 中 synergy AUC 上升与 unique2 Acc@1 下降同时存在，V2 仍需先做机制诊断。
+- 确认 V3 需要固定 graph snapshot、保持 target assignment 的均衡约束，并处理 k-NN 图连通性。
+- 新增可选的 component loss 输出，保持 V2 默认训练日志不变。
+- 完成三个 G0 seed、每 seed 8 batch 的只读梯度诊断，所有 checkpoint 状态均未改变。
+- 新增 V3 prototype graph、shortest path、anchor geodesic distance 和 geodesic profile 配置。
+- 远端 12 项 V3、梯度诊断和 prototype 单元测试通过，V3 Hydra 配置解析通过。
+- 更新 V3 审计计划、实验记录、结果分析、Agent 接续说明、研究想法和导师阶段汇报。
+
+未完成项：
+
+- 运行 V2-Cosine 与 V3-Geodesic 的短预算成对训练；这是下一轮实验，不在本轮启动。
+- 核对 V3 训练后的 graph 连通性、不可达 pair、训练日志和下游结果。
+- 提交本轮改动并发送完成通知。
+
+阻塞与风险：当前本地 `.venv` 指向失效的 Python 安装，不能依赖本机运行时测试；梯度冲突只能说明两个目标在参数空间中的局部关系，不能单独证明 unique2 退化的因果来源。V3 的 prototype graph 还会引入图更新频率、连通性、距离定义和计算开销等新变量。
+
+下一步：完成提交和邮件通知；后续用固定 seed、数据、alpha、queue、EMA 和训练预算运行 V2-Cosine/V3-Geodesic 短预算成对实验，不启动 100 epoch 或大范围超参数搜索。
+
 # 当前任务：重写导师阶段汇报
 
 任务名：整理 2026-09-12 之后的导师阶段汇报

@@ -1,5 +1,23 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：V2 梯度诊断完成，V3 代码已通过预检
+
+当前主线已经从单纯整理 V2 结果进入 V2 机制边界和 V3 geodesic 实现阶段。完整 UniGIR 包含三层：InfMasking、prototype cosine/global profile、prototype graph geodesic profile。当前 InfMasking 和 V2-Cosine 已完成主要实验；V3-Geodesic 已实现代码骨架，但还没有训练结果，不能把 V3 写成已验证方法。
+
+V2 梯度诊断使用 G0 的 UniGIR seed=42、7、123 checkpoint，每个读取 8 个训练 batch，只计算 `L_InfMasking` 和加权 `L_profile` 在共享参数上的梯度，不更新 optimizer、prototype、queue 或 checkpoint：
+
+| seed | 全参数 cosine 均值 | profile/base 范数比 | 冲突 batch 比例 | encoder cosine | head cosine |
+|---:|---:|---:|---:|---:|---:|
+| 42 | 0.222 | 0.105 | 0/8 | 0.237 | 0.108 |
+| 7 | 0.054 | 0.191 | 2/8 | 0.066 | -0.020 |
+| 123 | 0.035 | 0.149 | 4/8 | 0.033 | 0.057 |
+
+结论：没有发现跨 seed 稳定的全局梯度反向，但存在 seed 和 batch 相关的局部冲突，尤其是 seed=7 的 projection head。这个结果不能单独解释 unique2 退化，后续应继续看表征几何和 V3 的距离替换结果。
+
+新增代码：`losses/geodesic_profile.py`、`configs/model/unigir_geodesic.yaml`、`run_scripts/gradient_conflict_diagnostic.py`。V3 使用对称 prototype k-NN 图、Floyd–Warshall shortest path、多个最近 prototype anchors、Sinkhorn geodesic target 和负距离 masked prediction。远端 12 项相关单元测试通过，Hydra 配置解析通过。
+
+下一步：先用相同 seed、数据、alpha、queue、EMA 和训练预算做 V2-Cosine 与 V3-Geodesic 的短预算成对实验；不启动 100 epoch，不同时搜索 graph、alpha、queue 和 prototype 数量。运行前必须检查 graph 连通分量和不可达 pair，训练后必须同时查看 synergy、unique2 和四任务平均指标。
+
 ## 2026-09-25 当前接续状态：论文结果章节草稿已建立
 
 新增 [`22_论文结果章节草稿.md`](22_论文结果章节草稿.md)，已经把实验设置、G0 主结果、unique2 固定变换配对评测、texture 类别误差、profile/表示诊断、MOSI 对照和当前限制串成结果章节。图 1—3 使用 `ProjectDocs/figures/` 中已经人工审图的图片，图注和来源见 [`21_论文图注与来源.md`](21_论文图注与来源.md)。

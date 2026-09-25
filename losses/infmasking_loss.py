@@ -4,6 +4,7 @@ import torch.nn as nn
 from utils import all_gather_batch_with_grad
 from losses.entropy import entropy_gradeint
 from losses.prototype_alignment import PrototypeAlignment
+from losses.geodesic_profile import GeodesicPrototypeAlignment
 
 class InfMaskingLoss(nn.Module):
     def __init__(self, temperature=0.1, weights=None, cross=False, only_mask_last=False,
@@ -17,7 +18,16 @@ class InfMaskingLoss(nn.Module):
         self.penalty = penalty
         self.only_mask_last = only_mask_last
         # [UniGIR] optional global relational-profile alignment
-        self.profile = PrototypeAlignment(**profile_kwargs) if profile_kwargs else None
+        if profile_kwargs:
+            profile_kwargs = dict(profile_kwargs)
+            distance_mode = profile_kwargs.pop("distance_mode", "cosine")
+            profile_class = (
+                GeodesicPrototypeAlignment
+                if distance_mode == "geodesic" else PrototypeAlignment
+            )
+            self.profile = profile_class(**profile_kwargs)
+        else:
+            self.profile = None
 
     def infonce(self, z1, z2): # InfoNCE Loss
         N = len(z1)
@@ -95,7 +105,7 @@ class InfMaskingLoss(nn.Module):
         return mask_loss + cls_loss
 
 
-    def forward(self, outputs):
+    def forward(self, outputs, return_components=False):
         """
         :param outputs: Dict
             Dictionary with keys:
@@ -166,6 +176,8 @@ class InfMaskingLoss(nn.Module):
         profile_acc = None
         profile_out = None
         if self.profile is not None:
+            if hasattr(self.profile, "set_epoch"):
+                self.profile.set_epoch(epoch)
             # masked views (list of T tensors) must recover the global profile
             # (prototype codes) of the complete view of the *same* sample
             profile_out = self.profile(z1[prototype], mask_out1,
@@ -182,6 +194,7 @@ class InfMaskingLoss(nn.Module):
             base_loss = torch.mean(torch.stack(loss))
         total_loss = base_loss
         output_extra = {}
+        profile_loss = None
         if profile_out is not None:
             # Explicit alpha: L = L_InfMasking + alpha * L_profile.
             profile_loss = profile_out["loss"] * self.profile.loss_weight
@@ -197,12 +210,25 @@ class InfMaskingLoss(nn.Module):
                 "profile_prediction_usage_entropy": profile_out["prediction_usage_entropy"].detach(),
                 "profile_prototype_mean_abs_cosine": profile_out["prototype_mean_abs_cosine"].detach(),
             }
+            for graph_key in (
+                    "graph_num_components", "graph_unreachable_pairs",
+                    "graph_mean_degree", "graph_mean_edge_weight"):
+                if graph_key in profile_out:
+                    output_extra[graph_key] = profile_out[graph_key].detach()
         if self.penalty is not None:
             total_loss -= self.penalty*loss_uniform
 
         acc = torch.mean(torch.stack(acc))
 
         output = {"loss": total_loss, "ssl_acc": acc, **ssl_acc, **losses, **output_extra}
+        if return_components:
+            # Keep these tensors attached to the graph for read-only diagnostics.
+            # The normal training path does not request them, so Lightning logs
+            # only the existing detached scalar diagnostics.
+            output["loss_base_raw"] = base_loss
+            output["loss_profile_raw"] = (
+                profile_loss if profile_loss is not None else torch.zeros_like(base_loss)
+            )
         if profile_acc is not None:
             output["ssl_acc_profile"] = profile_acc
         return output

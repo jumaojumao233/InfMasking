@@ -1,5 +1,11 @@
 # Agent 继续推进说明
 
+## 2026-09-25 当前主线：实验收束与证据整理
+
+G0 六项正式任务、固定 test transform 复核、逐样本 profile/表示诊断和 MOSI $\alpha=0.125$ 三 seed 对照都已完成。当前有效判断为：G0 的 synergy ROC AUC 三 seed 均提升，但 unique2 acc@1 三 seed 均下降；MOSI 降低 profile loss weight 后平均结果低于 $\alpha=0.25$。因此 G0 记为 `Uncertain`，主配置保留 $\alpha=0.25$。
+
+后续 Agent 应停止 loss weight、queue、prototype 和 100 epoch 搜索，优先整理 `ProjectDocs/17_G0最终结果归档.md`、`ProjectDocs/04_结果分析.md`、MOSI 三 seed 表格、unique2 类别诊断和导师汇报材料。新的训练只有在出现明确的新假设、独立评价指标和停止条件后才安排。winpc 当前空闲，轻薄本只负责 SSH、日志、邮件和文档。
+
 ## 2026-09-25 当前接续状态：MOSI profile loss weight 对照完成
 
 在不读取封存 G0 数据的前提下，我在 MOSI 上完成了 $\alpha=0.125$ 的三 seed 低成本对照。seed=42、7、123 均以 `EXIT_CODE=0` 完成，watchdog 最终状态为 `ALL_COMPLETE`，完成邮件已发送；日志、hparams、checkpoint 和远端 SHA256 已复制回本地 `outputs/g4_mosi_profile_weight_a0125/`。
@@ -21,11 +27,11 @@
 
 固定变换的六项评测已在 winpc 串行完成，队列状态为 `QUEUE_COMPLETE`，六项退出码均为 0。seed=42、7、123 的 UniGIR - Baseline unique2 acc@1 差值分别为 `-0.050308`、`-0.038681` 和 `-0.116516`，三 seed 平均为 `-0.068502`。与上一轮随机裁剪评测平均 `-0.046986` 相比，退化方向没有消失，平均差值进一步下降 `-0.021516`。
 
-当前判断仍为 `Uncertain`。`stripes` 和 `pluses` 的 recall 在固定变换下均为 3/3 seed 下降，平均差值为 `-0.082` 和 `-0.123`。下一步是增加只读 profile 输出、原型使用分布和表示距离统计；在此之前不启动 100 epoch、不增加新的 queue 或 prototype 变体。轻薄本仍只负责 SSH、CPU 统计、文档和邮件。
+当前判断仍为 `Uncertain`。`stripes` 和 `pluses` 的 recall 在固定变换下均为 3/3 seed 下降，平均差值为 `-0.082` 和 `-0.123`。只读 profile 输出、原型使用分布和表示距离统计已经完成；轻薄本仍只负责 SSH、CPU 统计、文档和邮件，后续转向结果整理。
 
 逐样本 profile 与表示诊断已经完成。为和 unique2 probe 对齐，六个 checkpoint 使用 `Sup + biased=false + task=unique2` 测试 pair，每个 seed 导出 4214 个 pair；第一轮误用自监督 `biased=true` 的 402 pair 结果已废弃。三 seed 的 UniGIR profile acc 均值按 texture 在 0.715—0.776，masked distance 相对 Baseline 的总体差值为 `-0.0011`、`-0.0046`、`-0.0049`，平均约 `-0.0035`。`pluses` 的 profile acc 较高、profile KL 较低，但 unique2 仍在三个 seed 上下降，说明退化不能简单归因于 profile 预测失败或 masked 表征普遍不稳定。
 
-当前判断仍为 `Uncertain`。profile 目标确实改变了 masked 表征与完整表征的几何关系，但这种变化可能压低 texture 线性可分性，或与 unique2 所需方向发生任务权衡。固定 test transform 下两次完整视图相同，full-view distance 为 0 只作输入对齐检查。下一步只考虑一个 profile loss weight 低成本对照；没有完成该对照前，不启动 100 epoch、不增加新的 queue 或 prototype 变体。诊断脚本、队列配置和汇总结果见 `run_scripts/export_profile_representation_diagnostics.py`、`run_scripts/winpc_g0_representation_diagnostics.config.json` 和 `outputs/g0_repdiag_aggregate.md`。
+当前判断仍为 `Uncertain`。profile 目标确实改变了 masked 表征与完整表征的几何关系，但这种变化可能压低 texture 线性可分性，或与 unique2 所需方向发生任务权衡。固定 test transform 下两次完整视图相同，full-view distance 为 0 只作输入对齐检查。随后已经完成 MOSI profile loss weight 对照，结果不支持继续降低权重；诊断脚本、队列配置和汇总结果见 `run_scripts/export_profile_representation_diagnostics.py`、`run_scripts/winpc_g0_representation_diagnostics.config.json` 和 `outputs/g0_repdiag_aggregate.md`。
 
 ## 2026-09-25 当前接续状态：G0 unique2 独立评测已完成
 

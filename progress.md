@@ -18,15 +18,15 @@
 
 时间区间：约 3—5 分钟，仅估算检查步骤，不含 SSH 等待和训练剩余时间。
 
-当前状态：检查完成。V2-Cosine 仍在运行，TensorBoard 最近记录到 epoch 7，`last.ckpt` 存在；V3-Geodesic 尚未启动。G5 watchdog 最近一次动作是 `WAIT`，停止原因为空。
+当前状态：检查完成。远端时间 `2026-09-26 01:02:47`；V2-Cosine 已推进到 epoch 9/10，GPU 利用率约 32%，进程仍在运行，`last.ckpt` 存在；V3-Geodesic 尚未启动。G5 watchdog 最近一次动作是 `WAIT`，停止原因为空。
 
-已完成项：上一轮已确认 V3 smoke 成功；G5 V2/V3 串行配置已推送；G5 watchdog 已注册为每 15 分钟运行；本轮已核对远端计划任务、GPU、进程、status、checkpoint、TensorBoard 和 watchdog 事件。
+已完成项：上一轮已确认 V3 smoke 成功；G5 V2/V3 串行配置已推送；G5 watchdog 已注册为每 15 分钟运行；本轮已核对远端计划任务、GPU、进程、status、checkpoint、TensorBoard 和 watchdog 事件，并根据 epoch 进度估算剩余时间。
 
 未完成项：V2 尚未写入 `END`；V3 尚未启动；V2/V3 最终指标均未产生。
 
-阻塞与风险：V2 当前仍在训练或收尾，不能用 epoch 7 的中间状态判断结果；中间 checkpoint 不能替代完整训练结果；任何失败、CUDA 错误或 checkpoint 缺失都应暂停 V3 接续。
+阻塞与风险：V2 仍未写入 `END`，且 `by_fit` probing 收尾时间未核实；中间 checkpoint 不能替代完整训练结果；watchdog 最多带来约 15 分钟的 V3 启动等待；任何失败、CUDA 错误或 checkpoint 缺失都应暂停 V3 接续。
 
-下一步：继续等待 V2 正常写入 `END`，由 watchdog 检查成功后自动启动 V3；不执行终止、删除和重启操作。
+下一步：继续等待 V2 正常写入 `END`，由 watchdog 检查成功后自动启动 V3；从当前时间算，V2 预计还需约 20—40 分钟完成训练、probing 和收尾，V3 预计再需约 60—100 分钟，整组对照预计约 1 小时 20 分钟至 2 小时 35 分钟完成；不执行终止、删除和重启操作。
 
 ## 当前任务：把 V3 接入 winpc 调度链并运行 1 epoch smoke
 

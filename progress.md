@@ -12,7 +12,7 @@
 时间区间：约 10—20 分钟，不含 SMTP 服务响应和 GPU 训练等待。
 当前状态：watchdog 已同步并通过 Windows PowerShell 语法检查。它已识别 seed=123 Baseline 成功并自动注册 seed=123 UniGIR；当前状态为 `WAIT`，GPU 只运行当前 G0 任务。邮件实际发送返回 `550 User has no permission`，因此当前记录为 `EMAIL_FAILED_EXIT_1`。一次 WDDM 误报已修复，修复后重新检查恢复为 `WAIT`。
 已完成项：通知器使用 `INF_MASKING_MAIL_SMTP_HOST`、`INF_MASKING_MAIL_SMTP_PORT`、`INF_MASKING_MAIL_SENDER`、`INF_MASKING_MAIL_PASSWORD`、`INF_MASKING_MAIL_RECIPIENT`；远端秘密文件为 `C:\Users\liangyelian\secrets\InfMasking\mail.env.ps1`，已限制为当前用户；远端 Python 语法、配置读取、watchdog 解析、自动注册 seed=123 UniGIR、WDDM 进程识别和两次真实状态检查均通过；本地临时秘密文件已删除。
-未完成项：163 邮箱尚未允许当前账号通过 SMTP 发信；邮件权限修正后的成功发送验证、修复后的 watchdog 提交和私有仓库推送尚未完成。
+未完成项：163 邮箱尚未允许当前账号通过 SMTP 发信；邮件权限修正后的成功发送验证尚未完成。
 阻塞与风险：`550 User has no permission` 需要在 163 账号侧检查 SMTP 服务开关、授权码和账号权限；这部分无法通过项目代码绕过。当前训练不受邮件失败影响，但在权限修正前不会收到实际邮件。
 下一步：由用户在 163 账号侧确认 SMTP 发信权限和授权码；确认后重新验证 `EMAIL_SENT`，删除本地临时秘密文件，更新文档，提交并推送到 `private/main`。
 

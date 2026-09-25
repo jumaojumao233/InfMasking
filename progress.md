@@ -1,5 +1,21 @@
 # 项目进度
 
+## 当前任务：接入 winpc watchdog 邮件通知
+
+任务名：把 `mail163.py` 的发信逻辑改为环境变量配置，并接入 winpc G0 watchdog。
+启动时间：2026-09-25
+目标：让 watchdog 每 15 分钟发送一次状态邮件，并在状态变化、停止、启动下一组或全部完成时发送通知；敏感信息只保留在 winpc 用户目录的环境变量文件中。
+目的：减少人工查询，及时发现 G0 任务异常，同时避免把邮箱账号、授权码和收件地址提交到 GitHub。
+做法：新增标准库 Python SMTP 通知器和环境变量模板；修改 PowerShell watchdog；同步到 winpc；用本人邮箱做实际 SMTP 测试；验证 watchdog 可以继续推进任务；更新文档并提交到私有仓库。
+预期结果：邮件通知代码、远端秘密文件、计划任务和项目文档彼此对应；邮件服务异常只记录通知失败，不中断训练队列。
+执行规模：1 个 Python 通知器、1 个 PowerShell watchdog、1 个环境变量模板、1 个 `.gitignore`、4—6 个项目记录文件；约 8 个远端只读或同步步骤。
+时间区间：约 10—20 分钟，不含 SMTP 服务响应和 GPU 训练等待。
+当前状态：watchdog 已同步并通过 Windows PowerShell 语法检查。它已识别 seed=123 Baseline 成功并自动注册 seed=123 UniGIR；当前状态为 `WAIT`，GPU 只运行当前 G0 任务。邮件实际发送返回 `550 User has no permission`，因此当前记录为 `EMAIL_FAILED_EXIT_1`。
+已完成项：通知器使用 `INF_MASKING_MAIL_SMTP_HOST`、`INF_MASKING_MAIL_SMTP_PORT`、`INF_MASKING_MAIL_SENDER`、`INF_MASKING_MAIL_PASSWORD`、`INF_MASKING_MAIL_RECIPIENT`；远端秘密文件为 `C:\Users\liangyelian\secrets\InfMasking\mail.env.ps1`，已限制为当前用户；远端 Python 语法、配置读取、watchdog 解析和一次真实状态检查均通过；本地临时秘密文件仍待删除。
+未完成项：163 邮箱尚未允许当前账号通过 SMTP 发信；本地临时秘密文件尚未清理；邮件权限修正后的成功发送验证、文档最终更新、Git 提交和私有仓库推送尚未完成。
+阻塞与风险：`550 User has no permission` 需要在 163 账号侧检查 SMTP 服务开关、授权码和账号权限；这部分无法通过项目代码绕过。当前训练不受邮件失败影响，但在权限修正前不会收到实际邮件。
+下一步：由用户在 163 账号侧确认 SMTP 发信权限和授权码；确认后重新验证 `EMAIL_SENT`，删除本地临时秘密文件，更新文档，提交并推送到 `private/main`。
+
 ## 当前任务：实现并部署 G0 自动 watchdog
 
 任务名：实现并部署 `winpc_g4_watchdog.ps1`，自动检查并按固定顺序推进 G0。

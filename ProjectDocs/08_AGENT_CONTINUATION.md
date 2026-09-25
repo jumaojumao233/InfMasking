@@ -1,12 +1,12 @@
 # Agent 继续推进说明
 
-## 2026-09-25 当前接续状态：G0 seed=123 Baseline 正在运行
+## 2026-09-25 当前接续状态：G0 seed=123 UniGIR 正在运行
 
 G3 MOSI 三 seed 已完成，UniGIR 的 acc@1 和 ROC AUC 在 3/3 个 seed 上高于 Baseline，平均差值为 +0.041 和 +0.037，满足进入 G0 的条件。G0 启动前已核对封存数据清单、脚本哈希和 Baseline/UniGIR 的 Hydra 实际解析。
 
 当前远端任务：seed=42 Baseline 与 UniGIR 已分别以 `EXIT_CODE=0` 完成。原 seed=7 Baseline 于 23:48:57 以 `EXIT_CODE=1` 退出，stderr 报告 BatchNorm 更新处的 `CUDA error: invalid argument`。retry 任务 `InfMasking-G4-G0-s7-Baseline-Retry1-liangyl` 已从原 checkpoint 的 `epoch=2`、`global_step=471` 恢复，并于 01:20:13 以 `EXIT_CODE=0` 完成。最终 probing 为 share `0.959/0.999`、unique1 `0.806/0.974`、unique2 `0.778/0.969`、synergy `0.534/0.776`。原 seed=7 失败 checkpoint 不作为完成结果使用。
 
-接续动作：seed=7 UniGIR 已于 08:14:51 以 `EXIT_CODE=0` 完成，结果为 share `0.952/0.998`、unique1 `0.810/0.974`、unique2 `0.753/0.964`、synergy `0.574/0.813`。seed=7 UniGIR checkpoint 远端 SHA256 为 `D3C467CEDE0C621C323EFACE60B335ADA38420C747F2142205FDD22F730AD9FF`。seed=123 Baseline 已于 10:28:28 进入 `Running`，使用 G0 封存数据、pair seed=42、model seed=123、10 epoch、linear probing 和独立运行目录。`InfMasking-G4-Watchdog-liangyl` 已部署，每 15 分钟检查状态；训练结束后由 watchdog 在 GPU 安全且 checkpoint 完整时启动 seed=123 UniGIR。
+接续动作：seed=7 UniGIR 已于 08:14:51 以 `EXIT_CODE=0` 完成，结果为 share `0.952/0.998`、unique1 `0.810/0.974`、unique2 `0.753/0.964`、synergy `0.574/0.813`。seed=7 UniGIR checkpoint 远端 SHA256 为 `D3C467CEDE0C621C323EFACE60B335ADA38420C747F2142205FDD22F730AD9FF`。seed=123 Baseline 已以 `EXIT_CODE=0` 完成，watchdog 在 11:45 自动注册 seed=123 UniGIR，当前检查为 `WAIT`。watchdog 已接入环境变量邮件通知；163 SMTP 返回 `550 User has no permission`，当前为 `EMAIL_FAILED_EXIT_1`，邮件失败不会停止训练。训练结束后先检查状态日志、checkpoint 和通知结果，再统一归档 G0。
 
 ## 2026-09-24 当前接续状态：G3 MOSI 多 seed 完成，准备进入 G0
 

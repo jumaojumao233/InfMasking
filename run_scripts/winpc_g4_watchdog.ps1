@@ -17,10 +17,13 @@ else {
 $logRoot = Join-Path $ProjectRoot "winpc_logs"
 $runRoot = Join-Path $ProjectRoot "winpc_runs\InfMasking\bimodal_trifeatures"
 $scheduleScript = Join-Path $ProjectRoot "run_scripts\winpc_schedule_experiment.ps1"
+$notifyScript = Join-Path $ProjectRoot "run_scripts\winpc_g4_notify.py"
+$notifyPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
 $dataRoot = Join-Path $ProjectRoot "dataset\data\trifeatures_g0_seed20260924"
 $statePath = Join-Path $logRoot "winpc_g4_watchdog.state.json"
 $statusPath = Join-Path $logRoot "winpc_g4_watchdog.status.json"
 $eventPath = Join-Path $logRoot "winpc_g4_watchdog.events.log"
+$mailEnvScript = Join-Path $env:USERPROFILE "secrets\InfMasking\mail.env.ps1"
 $userName = $env:USERNAME
 $now = Get-Date
 
@@ -320,6 +323,68 @@ function Start-NextRun {
     return "START_REQUESTED $($Run.TaskName)"
 }
 
+function Send-WatchdogNotification {
+    param([object]$Result)
+
+    if ($DryRun) {
+        return "DRY_RUN_SKIPPED"
+    }
+    if (-not (Test-Path -LiteralPath $mailEnvScript)) {
+        return "MAIL_CONFIG_MISSING"
+    }
+    if (-not (Test-Path -LiteralPath $notifyScript)) {
+        return "MAIL_SCRIPT_MISSING"
+    }
+    if (-not (Test-Path -LiteralPath $notifyPython)) {
+        return "MAIL_PYTHON_MISSING"
+    }
+
+    try {
+        . $mailEnvScript
+        $subject = "[InfMasking G0][$($Result.Action)] $($Result.Detail)"
+        $bodyLines = @(
+            "Timestamp: $($Result.Timestamp)",
+            "Host: $($Result.Host)",
+            "Action: $($Result.Action)",
+            "Detail: $($Result.Detail)",
+            "",
+            "Run states:"
+        )
+        foreach ($run in $Result.Runs) {
+            $bodyLines += ("{0}. {1} seed={2} state={3} detail={4}" -f $run.Order, $run.Method, $run.Seed, $run.State, $run.Detail)
+        }
+        if ($Result.StopReasons.Count -gt 0) {
+            $bodyLines += ""
+            $bodyLines += "Stop reasons:"
+            $bodyLines += $Result.StopReasons
+        }
+        $bodyPath = Join-Path $logRoot "winpc_g4_watchdog.email.body.txt"
+        $bodyLines | Set-Content -LiteralPath $bodyPath -Encoding utf8
+        $notifyArgs = @(
+            $notifyScript,
+            "--subject", $subject,
+            "--body-file", $bodyPath
+        )
+        $mailErrorPath = Join-Path $logRoot "winpc_g4_watchdog.mail.stderr.log"
+        $previousErrorActionPreference = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = "Continue"
+            & $notifyPython @notifyArgs 2>> $mailErrorPath | Out-Null
+            $mailExitCode = $LASTEXITCODE
+        }
+        finally {
+            $ErrorActionPreference = $previousErrorActionPreference
+        }
+        if ($mailExitCode -eq 0) {
+            return "EMAIL_SENT"
+        }
+        return "EMAIL_FAILED_EXIT_$mailExitCode"
+    }
+    catch {
+        return "EMAIL_FAILED"
+    }
+}
+
 try {
     $snapshots = @($runs | ForEach-Object { Get-TaskSnapshot -Run $_ })
     $gpu = Get-GpuSnapshot
@@ -380,6 +445,8 @@ try {
         "$(Get-Date -Format o) ACTION=$action DETAIL=$actionDetail" | Add-Content -LiteralPath $eventPath -Encoding utf8
     }
 
+    $actionChanged = ($null -eq $state -or $state.LastAction -ne $action)
+
     $result = [pscustomobject]@{
         Timestamp = (Get-Date -Format o)
         Host = $env:COMPUTERNAME
@@ -390,6 +457,9 @@ try {
         Gpu = $gpu
         Runs = $snapshots
     }
+    $shouldNotify = ($action -eq "WAIT" -or $actionChanged -or $action -in @("STOP", "START_REQUESTED", "ALL_COMPLETE"))
+    $notification = if ($shouldNotify) { Send-WatchdogNotification -Result $result } else { "SKIPPED" }
+    $result | Add-Member -NotePropertyName Notification -NotePropertyValue $notification
     $result | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $statusPath -Encoding utf8
     [pscustomobject]@{
         LastAction = $action

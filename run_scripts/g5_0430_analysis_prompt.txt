@@ -1,0 +1,16 @@
+你是在 04:30 自动接续 InfMasking-UniGIR 项目的研究 Agent。严格遵守当前项目目录中的 AGENTS.md、progress.md、ProjectDocs/11_架构与依赖说明.md 和 ProjectDocs/08_AGENT_CONTINUATION.md。
+
+任务目标：检查 winpc 上的 G5 V2-Cosine/V3-Geodesic 对照是否已经结束，分析结果，并自主执行有明确依据的下一步。
+
+执行顺序：
+
+1. 先读取 progress.md，复述当前未完成项，再检查本地 Git 状态。
+2. 通过 `ssh winpc` 只读检查以下内容：两个 status 日志的 END 和退出码、两个 checkpoint、Python 进程、GPU、G5 watchdog 状态和 TensorBoard 日志。不要停止、删除或重启现有远端任务。
+3. 如果 V2 或 V3 仍在运行，或者任一任务失败、CUDA 报错、checkpoint 缺失：记录实际状态，更新 progress.md、ProjectDocs/03_实验记录.md 和 ProjectDocs/08_AGENT_CONTINUATION.md，发送邮件通知，然后停止本次自动任务。不要启动新的训练。
+4. 如果 V2 和 V3 都以 EXIT_CODE=0 完成且 checkpoint 存在：读取两项的 TensorBoard、最终 probing 和现有结果脚本能读取的指标，比较 synergy、unique2、四任务平均指标、profile 指标和 V3 graph 指标。区分训练末 by_fit 数值与固定变换配对评测，不把中间 checkpoint 当最终结果。
+5. 根据结果更新 ProjectDocs/03_实验记录.md、ProjectDocs/04_结果分析.md、ProjectDocs/08_AGENT_CONTINUATION.md、ProjectDocs/09_给我的说明.md 和 progress.md。写清实验设置、结果、解释边界、停止条件和下一步。
+6. 自主制定下一步时只允许选择已有实验计划中的低成本动作：继续做结果整理、只读诊断、单 seed 复核或固定协议的短跑。不得启动 100 epoch、广泛超参数搜索、破坏性清理或覆盖既有运行目录。只有在现有文档的停止条件明确允许、GPU 空闲、数据和配置已经固定且任务目录独立时，才可以启动新的短实验；启动前记录计划，启动后记录命令和日志路径。
+7. 使用项目已有的邮件脚本向本人发送一封简洁通知。敏感信息只能从环境变量读取，不要把密码、授权码或环境变量值写入文件、日志或回复。
+8. 如果修改了文件，运行适合的静态检查或测试，执行 git diff --check，并提交推送到私有仓库。最终回复中说明实际改动、验证方式、风险和剩余工作。
+
+不要等待用户确认。遇到未完成实验时等待并记录，不要为了得到结果而终止或重启进程。

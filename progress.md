@@ -1,5 +1,33 @@
 # 项目进度
 
+## 当前任务：检查 G5 V2/V3 winpc 运行情况
+
+任务名：核对 V2-Cosine 当前进程、V3 接续条件和 G5 watchdog 状态
+
+启动时间：2026-09-26，Asia/Shanghai
+
+目标：确认 V2 是否已经正常结束，V3 是否已经启动，检查 GPU、Python 进程、status 日志、checkpoint 和 watchdog 事件是否一致。
+
+目的：避免把中间 checkpoint 当成最终结果，也避免 V2 尚未收尾时误启动 V3 或遗漏训练异常。
+
+做法：只读读取 winpc 的计划任务、Python 进程、GPU 使用情况、两个实验的 status/stderr、checkpoint 目录和 G5 watchdog 状态；不停止进程，不删除任务，不修改远端文件。
+
+预期结果：得到 V2/V3 当前状态和下一步动作；若任务仍在运行则继续等待，若已完成则核对退出码后读取结果。
+
+执行规模：更新 1 个 Markdown 文件，执行 5 组远程只读检查，预计不超过 10 个命令，token 量级约 3k—5k。
+
+时间区间：约 3—5 分钟，仅估算检查步骤，不含 SSH 等待和训练剩余时间。
+
+当前状态：检查完成。V2-Cosine 仍在运行，TensorBoard 最近记录到 epoch 7，`last.ckpt` 存在；V3-Geodesic 尚未启动。G5 watchdog 最近一次动作是 `WAIT`，停止原因为空。
+
+已完成项：上一轮已确认 V3 smoke 成功；G5 V2/V3 串行配置已推送；G5 watchdog 已注册为每 15 分钟运行；本轮已核对远端计划任务、GPU、进程、status、checkpoint、TensorBoard 和 watchdog 事件。
+
+未完成项：V2 尚未写入 `END`；V3 尚未启动；V2/V3 最终指标均未产生。
+
+阻塞与风险：V2 当前仍在训练或收尾，不能用 epoch 7 的中间状态判断结果；中间 checkpoint 不能替代完整训练结果；任何失败、CUDA 错误或 checkpoint 缺失都应暂停 V3 接续。
+
+下一步：继续等待 V2 正常写入 `END`，由 watchdog 检查成功后自动启动 V3；不执行终止、删除和重启操作。
+
 ## 当前任务：把 V3 接入 winpc 调度链并运行 1 epoch smoke
 
 任务名：V3-Geodesic winpc smoke 与后续短预算对照准备

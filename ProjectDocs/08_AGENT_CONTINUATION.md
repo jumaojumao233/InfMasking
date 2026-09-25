@@ -1,5 +1,13 @@
 # Agent 继续推进说明
 
+## 2026-09-25 当前接续状态：论文与导师证据汇总已建立
+
+当前应优先阅读 [`19_论文与导师证据汇总.md`](19_论文与导师证据汇总.md)，再根据需要回查 [`17_G0最终结果归档.md`](17_G0最终结果归档.md) 和 [`04_结果分析.md`](04_结果分析.md)。汇总文档已经把 G0 三 seed 主结果、unique2 随机/固定变换配对评测、texture 类别变化、逐样本 profile/表示诊断和 MOSI 三 seed loss weight 对照放在同一条证据链上。
+
+当前有效判断保持为 `Uncertain`：synergy ROC AUC 三个 seed 均提升，平均 `+0.026`；unique2 acc@1 三个 seed 均下降，平均 `-0.053`；固定变换配对评测平均下降 `-0.068502`；MOSI 的 $\alpha=0.125$ 平均低于 $\alpha=0.25$。主配置保留 $\alpha=0.25$。
+
+后续 Agent 应先完成论文表格和导师汇报材料，不要因为 winpc 空闲就启动新训练。只有在出现明确的新假设、独立评价指标和停止条件后，才考虑一个受控的目标拆分对照。继续工作时必须保留当前证据边界：profile 分支没有明显 prototype collapse，但现有诊断不能证明 profile 造成了具体的 texture 类别错误。
+
 ## 2026-09-25 当前主线：实验收束与证据整理
 
 G0 六项正式任务、固定 test transform 复核、逐样本 profile/表示诊断和 MOSI $\alpha=0.125$ 三 seed 对照都已完成。当前有效判断为：G0 的 synergy ROC AUC 三 seed 均提升，但 unique2 acc@1 三 seed 均下降；MOSI 降低 profile loss weight 后平均结果低于 $\alpha=0.25$。因此 G0 记为 `Uncertain`，主配置保留 $\alpha=0.25$。

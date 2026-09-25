@@ -1,5 +1,11 @@
 # Agent 继续推进说明
 
+## 2026-09-25 当前接续状态：论文结果章节草稿已建立
+
+新增 [`22_论文结果章节草稿.md`](22_论文结果章节草稿.md)，已经把实验设置、G0 主结果、unique2 固定变换配对评测、texture 类别误差、profile/表示诊断、MOSI 对照和当前限制串成结果章节。图 1—3 使用 `ProjectDocs/figures/` 中已经人工审图的图片，图注和来源见 [`21_论文图注与来源.md`](21_论文图注与来源.md)。
+
+当前判断没有变化：G0 synergy ROC AUC 三个 seed 均提升，平均 `+0.026`；unique2 acc@1 三个 seed 均下降；固定变换配对平均 `-0.068502`；G0 为 `Uncertain`。下一步先审阅结果章节和导师阶段汇报，不启动训练。
+
 ## 2026-09-25 当前接续状态：论文主要结果图已生成
 
 已使用 [`make_paper_figures.py`](../run_scripts/make_paper_figures.py) 根据已核对的 G0 数字生成 3 张论文初稿图，图片位于 `ProjectDocs/figures/`，图注和复现命令见 [`21_论文图注与来源.md`](21_论文图注与来源.md)。图 1 展示 synergy ROC AUC 三个 seed 的配对结果，图 2 展示 unique2 固定变换配对评测，图 3 展示训练末类别准确率和固定变换 recall 的 texture 差值。

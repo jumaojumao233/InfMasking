@@ -12,7 +12,8 @@ param(
     [int]$MaxEpochs = 10,
     [int]$BatchSize = 32,
     [ValidateSet("by_epoch", "by_fit")]
-    [string]$ProbeFrequency = "by_fit"
+    [string]$ProbeFrequency = "by_fit",
+    [double]$ProfileLossWeight = 0.25
 )
 
 $ErrorActionPreference = "Stop"
@@ -28,7 +29,8 @@ $argumentList = @(
     "-GpuIndex $GpuIndex",
     "-MaxEpochs $MaxEpochs",
     "-BatchSize $BatchSize",
-    "-ProbeFrequency $ProbeFrequency"
+    "-ProbeFrequency $ProbeFrequency",
+    "-ProfileLossWeight $ProfileLossWeight"
 )
 
 $action = New-ScheduledTaskAction -Execute "powershell.exe" -Argument ($argumentList -join " ")

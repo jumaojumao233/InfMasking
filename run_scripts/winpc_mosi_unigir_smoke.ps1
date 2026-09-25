@@ -8,7 +8,8 @@ param(
     [int]$MaxEpochs = 1,
     [int]$BatchSize = 32,
     [ValidateSet("by_epoch", "by_fit")]
-    [string]$ProbeFrequency = "by_fit"
+    [string]$ProbeFrequency = "by_fit",
+    [double]$ProfileLossWeight = 0.25
 )
 
 $ErrorActionPreference = "Continue"
@@ -44,9 +45,13 @@ $args = @(
     "+exp_name=$RunName"
 )
 
+if ($Method -eq "unigir") {
+    $args += "model.model.loss_kwargs.profile_kwargs.loss_weight=$ProfileLossWeight"
+}
+
 $env:CUDA_VISIBLE_DEVICES = "$GpuIndex"
 "START $(Get-Date -Format o)" | Set-Content -LiteralPath $statusLog
-"METHOD=$Method DATASET=mosi SEED=$Seed GPU_INDEX=$GpuIndex MAX_EPOCHS=$MaxEpochs BATCH_SIZE=$BatchSize PROBE_FREQUENCY=$ProbeFrequency" | Add-Content -LiteralPath $statusLog
+"METHOD=$Method DATASET=mosi SEED=$Seed GPU_INDEX=$GpuIndex MAX_EPOCHS=$MaxEpochs BATCH_SIZE=$BatchSize PROBE_FREQUENCY=$ProbeFrequency PROFILE_LOSS_WEIGHT=$ProfileLossWeight" | Add-Content -LiteralPath $statusLog
 "STDOUT=$stdoutLog" | Add-Content -LiteralPath $statusLog
 "STDERR=$stderrLog" | Add-Content -LiteralPath $statusLog
 "ARGS=$($args -join ' ')" | Add-Content -LiteralPath $statusLog

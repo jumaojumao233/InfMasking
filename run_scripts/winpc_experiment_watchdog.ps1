@@ -282,6 +282,28 @@ function Add-OptionalSwitch {
 function Start-NextRun {
     param([object]$Run)
     if ($config.AutoStart -eq $false) { return "AUTO_START_DISABLED for $($Run.TaskName)" }
+
+    if ([string]$config.SchedulerType -eq "mosi") {
+        $maxEpochs = if ($Run.MaxEpochs) { [string]$Run.MaxEpochs } else { "10" }
+        $batchSize = if ($Run.BatchSize) { [string]$Run.BatchSize } else { "32" }
+        $probeFrequency = if ($Run.ProbeFrequency) { [string]$Run.ProbeFrequency } else { "by_fit" }
+        $profileLossWeight = if ($Run.ProfileLossWeight) { [string]$Run.ProfileLossWeight } else { "0.25" }
+        $cli = @(
+            "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $scheduleScript,
+            "-TaskName", [string]$Run.TaskName, "-RunName", [string]$Run.RunName,
+            "-Method", [string]$Run.Method, "-Seed", [string]$Run.Seed,
+            "-GpuIndex", [string]$gpuIndex,
+            "-MaxEpochs", $maxEpochs,
+            "-BatchSize", $batchSize,
+            "-ProbeFrequency", $probeFrequency,
+            "-ProfileLossWeight", $profileLossWeight
+        )
+        if ($DryRun) { return "DRY_RUN would schedule $($Run.TaskName)" }
+        & powershell.exe @cli | Out-File -FilePath $eventPath -Append -Encoding utf8
+        if ($LASTEXITCODE -ne 0) { throw "schedule script failed with exit code $LASTEXITCODE" }
+        return "START_REQUESTED $($Run.TaskName)"
+    }
+
     $maxEpochs = if ($Run.MaxEpochs) { [string]$Run.MaxEpochs } else { "10" }
     $maxSize = if ($Run.MaxSize) { [string]$Run.MaxSize } else { "10000" }
     $pairSeed = if ($Run.PairSeed) { [string]$Run.PairSeed } else { "42" }

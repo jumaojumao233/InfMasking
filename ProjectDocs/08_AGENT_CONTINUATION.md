@@ -1,5 +1,18 @@
 # Agent 继续推进说明
 
+## 2026-09-25 当前接续状态：MOSI profile loss weight 对照完成
+
+在不读取封存 G0 数据的前提下，我在 MOSI 上完成了 $\alpha=0.125$ 的三 seed 低成本对照。seed=42、7、123 均以 `EXIT_CODE=0` 完成，watchdog 最终状态为 `ALL_COMPLETE`，完成邮件已发送；日志、hparams、checkpoint 和远端 SHA256 已复制回本地 `outputs/g4_mosi_profile_weight_a0125/`。
+
+| model seed | Baseline acc@1/AUC | $\alpha=0.25$ acc@1/AUC | $\alpha=0.125$ acc@1/AUC |
+|---:|---|---|---|
+| 42 | 0.573 / 0.655 | 0.641 / 0.704 | 0.641 / 0.715 |
+| 7 | 0.559 / 0.627 | 0.587 / 0.642 | 0.607 / 0.664 |
+| 123 | 0.608 / 0.671 | 0.636 / 0.717 | 0.557 / 0.652 |
+| 三 seed 平均 | 0.580 / 0.651 | 0.621 / 0.688 | 0.602 / 0.677 |
+
+结论：降低 profile loss weight 没有稳定改善 MOSI，平均结果低于 $\alpha=0.25$，也不能直接解释 G0 unique2 退化。当前保留 $\alpha=0.25$，不再增加 loss weight、queue 或 prototype 变体，不启动 100 epoch。下一步整理 G0、MOSI 和表示诊断结果，准备导师汇报和论文材料。轻薄本仍只负责 SSH、日志、哈希、文档和邮件，训练全部在 winpc 完成。
+
 ## 2026-09-25 当前接续状态：固定 test transform 复核完成
 
 上一轮随机裁剪评测发现 G0 unique2 退化后，我给 `TrifeaturesDataModule` 增加了 `fixed_eval_transform`，只对 `model="Sup"` 的 linear probe 数据模块生效，固定使用 `Resize(256) + CenterCrop(224)`。同时修复了 `mode=test` 下 TensorBoard 日志根目录被强制写到 checkpoint 目录的问题，增加 `test_root_dir`，每个评测使用自己的输出目录。

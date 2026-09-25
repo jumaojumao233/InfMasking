@@ -1,0 +1,39 @@
+{
+  "ExperimentName": "InfMasking-MOSI-ProfileWeight-A0125-S7S123-liangyl",
+  "UserSuffix": "liangyl",
+  "GpuIndex": 0,
+  "AutoStart": true,
+  "SchedulerType": "mosi",
+  "RunRoot": "winpc_mosi_runs",
+  "LogRoot": "winpc_mosi_logs",
+  "ScheduleScript": "run_scripts\\winpc_schedule_mosi_experiment.ps1",
+  "NotifyScript": "run_scripts\\winpc_g4_notify.py",
+  "NotifyPython": ".venv\\Scripts\\python.exe",
+  "MailEnvScript": "%USERPROFILE%\\secrets\\InfMasking\\mail.env.ps1",
+  "Runs": [
+    {
+      "Order": 1,
+      "TaskName": "InfMasking-MOSI-ProfileWeight-A0125-S7-liangyl",
+      "RunName": "winpc_g4_mosi_s7_unigir_a0125",
+      "Method": "unigir",
+      "Seed": 7,
+      "MaxEpochs": 10,
+      "BatchSize": 32,
+      "ProfileLossWeight": 0.125,
+      "ProbeFrequency": "by_fit",
+      "CheckpointPath": "winpc_mosi_runs\\InfMasking\\mosi\\winpc_g4_mosi_s7_unigir_a0125\\checkpoints\\last.ckpt"
+    },
+    {
+      "Order": 2,
+      "TaskName": "InfMasking-MOSI-ProfileWeight-A0125-S123-liangyl",
+      "RunName": "winpc_g4_mosi_s123_unigir_a0125",
+      "Method": "unigir",
+      "Seed": 123,
+      "MaxEpochs": 10,
+      "BatchSize": 32,
+      "ProfileLossWeight": 0.125,
+      "ProbeFrequency": "by_fit",
+      "CheckpointPath": "winpc_mosi_runs\\InfMasking\\mosi\\winpc_g4_mosi_s123_unigir_a0125\\checkpoints\\last.ckpt"
+    }
+  ]
+}

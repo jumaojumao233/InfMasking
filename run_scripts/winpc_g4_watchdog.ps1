@@ -19,6 +19,7 @@ $runRoot = Join-Path $ProjectRoot "winpc_runs\InfMasking\bimodal_trifeatures"
 $scheduleScript = Join-Path $ProjectRoot "run_scripts\winpc_schedule_experiment.ps1"
 $notifyScript = Join-Path $ProjectRoot "run_scripts\winpc_g4_notify.py"
 $notifyPython = Join-Path $ProjectRoot ".venv\Scripts\python.exe"
+$mailFormatter = Join-Path $PSScriptRoot "winpc_watchdog_mail.ps1"
 $dataRoot = Join-Path $ProjectRoot "dataset\data\trifeatures_g0_seed20260924"
 $statePath = Join-Path $logRoot "winpc_g4_watchdog.state.json"
 $statusPath = Join-Path $logRoot "winpc_g4_watchdog.status.json"
@@ -34,6 +35,10 @@ if ($DryRun) {
 }
 
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
+if (-not (Test-Path -LiteralPath $mailFormatter)) {
+    throw "watchdog mail formatter does not exist: $mailFormatter"
+}
+. $mailFormatter
 
 $runs = @(
     [pscustomobject]@{
@@ -256,7 +261,7 @@ function Get-GpuSnapshot {
                 ($commandLine -match "(?i)\\Windows\\|\\WindowsApps\\|\\Microsoft\\|\\Edge\\") -or
                 ($processName -match "(?i)^(dwm|dwm\.exe|WUDFHost|WUDFHost\.exe|csrss|csrss\.exe|winlogon|winlogon\.exe|explorer|explorer\.exe|SearchApp|SearchApp\.exe|ShellExperienceHost|ShellExperienceHost\.exe|TextInputHost|TextInputHost\.exe|msedgewebview2|msedgewebview2\.exe|msedge|msedge\.exe|PhoneExperienceHost|PhoneExperienceHost\.exe)$")
             )
-            $allowed = $desktopProcess -or ($ownerName -eq $userName -and $knownRun)
+            $allowed = $desktopProcess -or $knownRun
             $apps += [pscustomobject]@{
                 Pid = $processId
                 ProcessName = $processName
@@ -288,7 +293,7 @@ function Get-GpuSnapshot {
 
     return [pscustomobject]@{
         Safe = $true
-        Detail = if ($apps.Count -eq 0) { "no GPU compute process" } else { "only current G0 task process is using the GPU" }
+        Detail = if ($apps.Count -eq 0) { "no GPU compute process" } else { "only configured experiment or desktop GPU processes are present" }
         Apps = $apps
     }
 }
@@ -330,8 +335,17 @@ function Start-NextRun {
 function Send-WatchdogNotification {
     param([object]$Result)
 
+    $bodyFileName = if ($DryRun) {
+        "winpc_g4_watchdog.dryrun.email.body.txt"
+    }
+    else {
+        "winpc_g4_watchdog.email.body.txt"
+    }
+    $bodyPath = Join-Path $logRoot $bodyFileName
+    $bodyLines = @(Get-WatchdogNotificationBodyLines -Result $Result)
+    $bodyLines | Set-Content -LiteralPath $bodyPath -Encoding utf8
     if ($DryRun) {
-        return "DRY_RUN_SKIPPED"
+        return "DRY_RUN_BODY_WRITTEN"
     }
     if (-not (Test-Path -LiteralPath $mailEnvScript)) {
         return "MAIL_CONFIG_MISSING"
@@ -346,24 +360,6 @@ function Send-WatchdogNotification {
     try {
         . $mailEnvScript
         $subject = "[InfMasking G0][$($Result.Action)] $($Result.Detail)"
-        $bodyLines = @(
-            "Timestamp: $($Result.Timestamp)",
-            "Host: $($Result.Host)",
-            "Action: $($Result.Action)",
-            "Detail: $($Result.Detail)",
-            "",
-            "Run states:"
-        )
-        foreach ($run in $Result.Runs) {
-            $bodyLines += ("{0}. {1} seed={2} state={3} detail={4}" -f $run.Order, $run.Method, $run.Seed, $run.State, $run.Detail)
-        }
-        if ($Result.StopReasons.Count -gt 0) {
-            $bodyLines += ""
-            $bodyLines += "Stop reasons:"
-            $bodyLines += $Result.StopReasons
-        }
-        $bodyPath = Join-Path $logRoot "winpc_g4_watchdog.email.body.txt"
-        $bodyLines | Set-Content -LiteralPath $bodyPath -Encoding utf8
         $notifyArgs = @(
             $notifyScript,
             "--subject", $subject,

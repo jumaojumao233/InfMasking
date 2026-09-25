@@ -57,6 +57,7 @@ $scheduleScript = Resolve-ConfiguredPath -PathValue ([string]$config.ScheduleScr
 $notifyScript = Resolve-ConfiguredPath -PathValue ([string]$config.NotifyScript)
 $notifyPython = Resolve-ConfiguredPath -PathValue ([string]$config.NotifyPython)
 $mailEnvScript = Resolve-ConfiguredPath -PathValue ([string]$config.MailEnvScript)
+$mailFormatter = Join-Path $PSScriptRoot "winpc_watchdog_mail.ps1"
 $defaultDataRoot = Resolve-ConfiguredPath -PathValue ([string]$config.DataRoot)
 $statePath = Join-Path $logRoot "$safeName.watchdog.state.json"
 $statusPath = Join-Path $logRoot "$safeName.watchdog.status.json"
@@ -69,6 +70,10 @@ if ($DryRun) {
 }
 
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
+if (-not (Test-Path -LiteralPath $mailFormatter)) {
+    throw "watchdog mail formatter does not exist: $mailFormatter"
+}
+. $mailFormatter
 
 $runs = @($config.Runs | ForEach-Object {
     if ($null -eq $_.Order -or $null -eq $_.TaskName -or $null -eq $_.RunName -or $null -eq $_.Method -or $null -eq $_.Seed) {
@@ -247,7 +252,7 @@ function Get-GpuSnapshot {
                 ($commandLine -match "(?i)\\Windows\\|\\WindowsApps\\|\\Microsoft\\|\\Edge\\") -or
                 ($processName -match "(?i)^(dwm|dwm\.exe|WUDFHost|WUDFHost\.exe|csrss|csrss\.exe|winlogon|winlogon\.exe|explorer|explorer\.exe|SearchApp|SearchApp\.exe|ShellExperienceHost|ShellExperienceHost\.exe|TextInputHost|TextInputHost\.exe|msedgewebview2|msedgewebview2\.exe|msedge|msedge\.exe|PhoneExperienceHost|PhoneExperienceHost\.exe)$")
             )
-            $allowed = $desktopProcess -or ($ownerName -eq $userName -and $knownRun)
+            $allowed = $desktopProcess -or $knownRun
             $apps += [pscustomobject]@{
                 Pid = $processId
                 ProcessName = $processName
@@ -335,32 +340,22 @@ function Start-NextRun {
 
 function Send-WatchdogNotification {
     param([object]$Result)
-    if ($DryRun) { return "DRY_RUN_SKIPPED" }
+    $bodyFileName = if ($DryRun) {
+        "$safeName.watchdog.dryrun.email.body.txt"
+    }
+    else {
+        "$safeName.watchdog.email.body.txt"
+    }
+    $bodyPath = Join-Path $logRoot $bodyFileName
+    $bodyLines = @(Get-WatchdogNotificationBodyLines -Result $Result)
+    $bodyLines | Set-Content -LiteralPath $bodyPath -Encoding utf8
+    if ($DryRun) { return "DRY_RUN_BODY_WRITTEN" }
     foreach ($path in @($mailEnvScript, $notifyScript, $notifyPython)) {
         if (-not (Test-Path -LiteralPath $path)) { return "MAIL_DEPENDENCY_MISSING: $path" }
     }
     try {
         . $mailEnvScript
         $subject = "[InfMasking $experimentName][$($Result.Action)] $($Result.Detail)"
-        $bodyLines = @(
-            "Timestamp: $($Result.Timestamp)",
-            "Host: $($Result.Host)",
-            "Experiment: $experimentName",
-            "Action: $($Result.Action)",
-            "Detail: $($Result.Detail)",
-            "",
-            "Run states:"
-        )
-        foreach ($run in $Result.Runs) {
-            $bodyLines += ("{0}. {1} seed={2} state={3} detail={4}" -f $run.Order, $run.Method, $run.Seed, $run.State, $run.Detail)
-        }
-        if ($Result.StopReasons.Count -gt 0) {
-            $bodyLines += ""
-            $bodyLines += "Stop reasons:"
-            $bodyLines += $Result.StopReasons
-        }
-        $bodyPath = Join-Path $logRoot "$safeName.watchdog.email.body.txt"
-        $bodyLines | Set-Content -LiteralPath $bodyPath -Encoding utf8
         $mailErrorPath = Join-Path $logRoot "$safeName.watchdog.mail.stderr.log"
         $previousErrorActionPreference = $ErrorActionPreference
         try {

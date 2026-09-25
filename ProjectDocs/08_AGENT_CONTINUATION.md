@@ -13,6 +13,8 @@
 
 结论：降低 profile loss weight 没有稳定改善 MOSI，平均结果低于 $\alpha=0.25$，也不能直接解释 G0 unique2 退化。当前保留 $\alpha=0.25$，不再增加 loss weight、queue 或 prototype 变体，不启动 100 epoch。下一步整理 G0、MOSI 和表示诊断结果，准备导师汇报和论文材料。轻薄本仍只负责 SSH、日志、哈希、文档和邮件，训练全部在 winpc 完成。
 
+本轮还修正了 winpc watchdog 的邮件正文。以前邮件会把整个队列逐条列出，因此已经完成的历史任务仍然反复出现；现在两个 watchdog 共用 `run_scripts/winpc_watchdog_mail.ps1`，只显示当前运行、待运行和异常项，已完成任务只保留数量统计。`winpc` 是我独占使用的台式机，GPU 检查用于发现残留或未登记进程，不再按共享机器等待其他用户。
+
 ## 2026-09-25 当前接续状态：固定 test transform 复核完成
 
 上一轮随机裁剪评测发现 G0 unique2 退化后，我给 `TrifeaturesDataModule` 增加了 `fixed_eval_transform`，只对 `model="Sup"` 的 linear probe 数据模块生效，固定使用 `Resize(256) + CenterCrop(224)`。同时修复了 `mode=test` 下 TensorBoard 日志根目录被强制写到 checkpoint 目录的问题，增加 `test_root_dir`，每个评测使用自己的输出目录。

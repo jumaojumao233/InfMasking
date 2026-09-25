@@ -10,8 +10,8 @@
 预期结果：`WAIT` 邮件只列当前运行项，`START_REQUESTED` 邮件只列下一项，`STOP` 邮件只列异常项，`ALL_COMPLETE` 邮件只说明全部完成并给出完成数量；历史队列仍完整保存在状态 JSON 中。
 执行规模：4 个脚本、1 个测试文件、4 个研究文档和本进度文件；1 次远端脚本同步、1 次远端 DryRun 与状态邮件正文核对。
 时间区间：本地修改和验证约 10—20 分钟，远端同步与命令等待另计。
-当前状态：本地代码已修改；三个 PowerShell 文件解析通过；邮件正文模拟验证通过；winpc 已完成脚本同步、PowerShell DryRun 和完整 Python 测试，33 项全部通过；远端四个同步文件的 SHA256 与本地一致；GPU 利用率约 3%、显存 314 MiB，只有 Windows 桌面进程，没有训练或评测 Python 进程；提交 `a5414cc` 已推送到 GitHub 私有仓库。
-已完成项：确认旧 G0 完成邮件会逐条列出六个已完成任务；确认 winpc 相关计划任务已结束或禁用、当前 GPU 无训练进程；新增 `winpc_watchdog_mail.ps1`；两个 watchdog 改为共享正文格式并在 DryRun 时写出正文预览；GPU 放行判断改为当前配置实验进程或桌面进程；新增 `tests/test_watchdog_mail_summary.py`；更新监控规范、G0 监控说明、Agent 接续说明和给用户的说明。
+当前状态：本地代码已修改；三个 PowerShell 文件解析通过；邮件正文模拟验证通过；winpc 已完成脚本同步、PowerShell DryRun 和完整 Python 测试，33 项全部通过；远端四个同步文件的 SHA256 与本地一致；GPU 利用率约 3%、显存 314 MiB，只有 Windows 桌面进程，没有训练或评测 Python 进程；提交 `a5414cc` 和最终进度提交 `fa5c788` 已推送到 GitHub 私有仓库；完成通知已通过 winpc 环境变量邮件链路发送。
+已完成项：确认旧 G0 完成邮件会逐条列出六个已完成任务；确认 winpc 相关计划任务已结束或禁用、当前 GPU 无训练进程；新增 `winpc_watchdog_mail.ps1`；两个 watchdog 改为共享正文格式并在 DryRun 时写出正文预览；GPU 放行判断改为当前配置实验进程或桌面进程；新增 `tests/test_watchdog_mail_summary.py`；更新监控规范、G0 监控说明、Agent 接续说明和给用户的说明；通过 winpc 环境变量邮件通知发送本轮完成报告；将 `D:\QQ_channel_project\fatie\mail163.py` 的明文账号和授权码迁移到被 `.gitignore` 忽略的 `mail.env.ps1`，并完成语法检查。
 未完成项：本任务没有未完成项。
 阻塞与风险：本地 `.venv` 指向失效的 Python 安装，`uv` 默认缓存目录也存在路径异常，但不影响本轮远端验证；远端邮件密钥未读取、未修改。GPU 检查仍会对未登记的计算进程停止自动推进，这属于保守安全策略。
 下一步：后续新实验直接使用共享邮件正文格式；启动新队列前检查对应配置、独立目录、checkpoint 和 watchdog 状态文件。

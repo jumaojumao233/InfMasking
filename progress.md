@@ -6,12 +6,12 @@
 启动时间：2026-09-25
 目标：轻薄本只负责邮件、日志和文档；winpc 负责只读 checkpoint 导出；输出逐样本 profile 预测、目标置信度、profile KL、masked-to-full 表征距离、两种增强的完整表征距离，以及按 texture 类别的汇总。
 目的：判断 `stripes`、`pluses` 等 unique2 退化类别是否同时出现 profile 预测不稳定或 masked 表征偏离，从而区分 profile 分支问题和下游线性探针问题。
-做法：新增独立 Python 导出脚本，不改训练入口和 checkpoint；用已有固定 test transform、Hydra 配置和 `BimodalTrifeaturesMMSSL.idx_pairs` 对齐样本顺序；先用本地静态测试确认张量形状，再在 winpc 上串行读取三个 UniGIR checkpoint；用独立分析脚本生成 JSON、CSV 和 Markdown；最后更新结果分析与接续文档。
-预期结果：三个 UniGIR checkpoint 均能完成只读导出，并得到按 texture 分类的 profile 与表示统计；如果类别间差异清楚，下一步只做针对性机制验证；如果差异不稳定，则保留当前 `Uncertain`，不进入 100 epoch 或增加机制变体。
+做法：新增独立 Python 导出脚本，不改训练入口和 checkpoint；用已有固定 test transform、Hydra 配置和 `Sup + biased=false + task=unique2` 的 `BimodalTrifeatures.idx_pairs` 对齐样本顺序；先在 winpc 做小样本验证，再串行读取六个 Baseline/UniGIR checkpoint；用独立分析脚本生成 JSON、CSV 和 Markdown；最后更新结果分析与接续文档。
+预期结果：六个 checkpoint 均能完成只读导出，并得到按 texture 分类的 profile 与表示统计；如果类别间差异清楚，下一步只做针对性机制验证；如果差异不稳定，则保留当前 `Uncertain`，不进入 100 epoch 或增加机制变体。
 执行规模：4 个工作切片，涉及 1 个只读导出脚本、1 个分析脚本、1 个 PowerShell 启动脚本、1 个配置、1 个测试模块和 5—7 个项目文档；不启动训练，不修改远端 checkpoint；约 20—40 分钟，不含远端排队和邮件网络等待。
 时间区间：仅估算本轮代码、分析和文档步骤，不含 GPU 排队、远端训练和邮件网络等待。
 当前状态：逐样本 profile 与表示诊断已经完成。六项修正后只读导出均为 `EXIT_CODE=0`，队列为 `QUEUE_COMPLETE`，每个 seed 导出 4214 个与 unique2 probe 对齐的 pair；配对比较、三 seed 汇总和文档更新均已完成；winpc 完整 unittest 28 项通过；代码和文档已提交并推送，最新提交为 `88ae264`。
-已完成项：确认 `InfMaskingLoss` 已计算 profile 聚合量；新增 `Test results` 输出；新增 `ProfileOnly` 评测模式、三 seed profile 配置、profile 日志解析器和测试；远端 10 项测试通过；固定变换六项队列为 `QUEUE_COMPLETE`，六项退出码均为 0；unique2 三 seed 平均差值为 `-0.068502`；三个 UniGIR seed 的 profile-only 自监督 pair 统计未显示明显 prototype collapse；新增逐样本 JSON/CSV 导出、Baseline/UniGIR 配对表示距离分析、三 seed 汇总、PowerShell 邮件队列和 7 项相关单元测试；修正了第一轮 402 pair 与 unique2 协议不一致的问题；修正后六项均处理 4214 个 `Sup + biased=false + task=unique2` pair；已更新实验记录、结果分析、最终归档、接续、给用户、导师阶段汇报和监控规范文档。
+已完成项：确认 `InfMaskingLoss` 已计算 profile 聚合量；新增 `Test results` 输出；新增 `ProfileOnly` 评测模式、三 seed profile 配置、profile 日志解析器和测试；远端 10 项测试通过；固定变换六项队列为 `QUEUE_COMPLETE`，六项退出码均为 0；unique2 三 seed 平均差值为 `-0.068502`；三个 UniGIR seed 的 profile-only 自监督 pair 统计未显示明显 prototype collapse；新增逐样本 JSON/CSV 导出、Baseline/UniGIR 配对表示距离分析、三 seed 汇总、PowerShell 邮件队列和测试；修正了第一轮 402 pair 与 unique2 协议不一致的问题；修正后六项均处理 4214 个 `Sup + biased=false + task=unique2` pair；winpc 完整 28 项测试通过；已更新实验记录、结果分析、最终归档、接续、给用户、导师阶段汇报和监控规范文档。
 未完成项：尚未运行 profile loss weight 对照；当前没有 100 epoch 训练计划，也没有新增 queue 或 prototype 变体。
 阻塞与风险：profile 测试使用 checkpoint 中的原型和固定 test transform，但 profile 指标仍是聚合量，不能单独解释类别错误；当前只核实到一张 GTX 1080 Ti；profile 评测失败时必须停止队列。
 下一步：先提交并推送本轮代码和文档；随后根据导师选择，运行一个只改变 profile loss weight 的低成本对照，或暂停机制扩展转向 MOSI 和论文材料整理；不启动 100 epoch 或新的机制变体。

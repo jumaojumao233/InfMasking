@@ -6,6 +6,7 @@ data_module:
   data_root: null  # set a separate root for an unseen data-generation seed
   batch_size: 64
   num_workers: 0
+  fixed_eval_transform: false
   max_size: 1e4  # sampled image pairs, not the number of base images
   share_attr: "shape"
   unique_attr: "texture"

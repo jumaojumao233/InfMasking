@@ -1,0 +1,59 @@
+{
+  "ExperimentName": "winpc_g0_fixed_unique2_eval",
+  "Runs": [
+    {
+      "RunName": "winpc_g0_fixed_s42_baseline_unique2",
+      "Method": "baseline",
+      "Seed": 42,
+      "GpuIndex": 0,
+      "CheckpointPath": "winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s42_baseline\\checkpoints\\last.ckpt",
+      "DataRoot": "dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "winpc_eval\\g0_fixed_s42_baseline_unique2"
+    },
+    {
+      "RunName": "winpc_g0_fixed_s42_unigir_unique2",
+      "Method": "unigir",
+      "Seed": 42,
+      "GpuIndex": 0,
+      "CheckpointPath": "winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s42_unigir\\checkpoints\\last.ckpt",
+      "DataRoot": "dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "winpc_eval\\g0_fixed_s42_unigir_unique2"
+    },
+    {
+      "RunName": "winpc_g0_fixed_s7_baseline_unique2",
+      "Method": "baseline",
+      "Seed": 7,
+      "GpuIndex": 0,
+      "CheckpointPath": "winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s7_baseline_retry1\\checkpoints\\last.ckpt",
+      "DataRoot": "dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "winpc_eval\\g0_fixed_s7_baseline_unique2"
+    },
+    {
+      "RunName": "winpc_g0_fixed_s7_unigir_unique2",
+      "Method": "unigir",
+      "Seed": 7,
+      "GpuIndex": 0,
+      "CheckpointPath": "winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s7_unigir\\checkpoints\\last.ckpt",
+      "DataRoot": "dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "winpc_eval\\g0_fixed_s7_unigir_unique2"
+    },
+    {
+      "RunName": "winpc_g0_fixed_s123_baseline_unique2",
+      "Method": "baseline",
+      "Seed": 123,
+      "GpuIndex": 0,
+      "CheckpointPath": "winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s123_baseline\\checkpoints\\last.ckpt",
+      "DataRoot": "dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "winpc_eval\\g0_fixed_s123_baseline_unique2"
+    },
+    {
+      "RunName": "winpc_g0_fixed_s123_unigir_unique2",
+      "Method": "unigir",
+      "Seed": 123,
+      "GpuIndex": 0,
+      "CheckpointPath": "winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s123_unigir\\checkpoints\\last.ckpt",
+      "DataRoot": "dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "winpc_eval\\g0_fixed_s123_unigir_unique2"
+    }
+  ]
+}

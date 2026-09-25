@@ -12,6 +12,27 @@ from torchvision import transforms
 from utils import make_dirs, GaussianBlur
 
 
+def build_trifeatures_image_transform(normalize, fixed_eval_transform: bool = False):
+    """Build the image transform used by supervised Trifeatures loaders.
+
+    Training keeps the historical random crop. Read-only linear probing can
+    request a deterministic resize and center crop so repeated checkpoint
+    evaluations use the same image transform.
+    """
+    if fixed_eval_transform:
+        return transforms.Compose([
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            normalize,
+        ])
+    return transforms.Compose([
+        transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
+        transforms.ToTensor(),
+        normalize,
+    ])
+
+
 class TrifeaturesDataModule(LightningDataModule):
     """Data module for Trifeatures/BimodalTrifeatures dataset"""
 
@@ -21,6 +42,7 @@ class TrifeaturesDataModule(LightningDataModule):
                  num_workers: int = 0,
                  augment: Optional[Tuple[str]] = None,
                  data_root: Optional[str] = None,
+                 fixed_eval_transform: bool = False,
                  **kwargs):
         """
         :param model: {'Sup', 'CLIP', 'CrossSelf', 'CoMM', 'InfMasking'}
@@ -33,6 +55,9 @@ class TrifeaturesDataModule(LightningDataModule):
         :param batch_size: Batch size to pass to Dataloaders
         :param num_workers: Number of workers to pass to Dataloaders
         :param data_root: Optional dataset root. If omitted, use catalog.json.
+        :param fixed_eval_transform: Use a deterministic transform for the
+            supervised linear-probe data module. The default preserves the
+            historical random crop used by training.
         :param kwargs: keywords args given to Trifeatures/BimodalTrifeatures dataset
         """
         super().__init__()
@@ -48,11 +73,10 @@ class TrifeaturesDataModule(LightningDataModule):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                          std=[0.229, 0.224, 0.225])
 
-        self.img_transform = transforms.Compose([
-            transforms.RandomResizedCrop(224, scale=(0.5, 1.0)),
-            transforms.ToTensor(),
-            normalize
-        ])
+        self.img_transform = build_trifeatures_image_transform(
+            normalize,
+            fixed_eval_transform=fixed_eval_transform,
+        )
 
         self.augment = transforms.Compose([
             transforms.RandomResizedCrop(224, scale=(0.08, 1.)),
@@ -106,6 +130,13 @@ class TrifeaturesDataModule(LightningDataModule):
                 else:
                     raise ValueError(f"Unknown augmentation: {aug}")
             self.augment = _augment_parsed
+
+        if fixed_eval_transform and self.model in {"CoMM", "InfMasking"}:
+            self.augment = (
+                [self.img_transform, self.img_transform]
+                if dataset == "bimodal"
+                else self.img_transform
+            )
 
         if self.model == "Sup":
             dset = Trifeatures if dataset == "unimodal" else BimodalTrifeatures

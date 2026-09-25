@@ -22,6 +22,7 @@ param(
     [string]$OutputRoot,
     [int]$GpuIndex = 0,
     [int]$NotifyIntervalSeconds = 900,
+    [switch]$ProfileOnly,
     [string]$ProjectRoot = ""
 )
 
@@ -90,17 +91,27 @@ $args = @(
     "trainer.accelerator=gpu",
     "trainer.devices=1",
     "trainer.default_root_dir=$OutputRoot",
+    "test_root_dir=$OutputRoot",
     "trainer.inference_mode=false",
     "trainer.num_sanity_val_steps=0",
     "+trainer.enable_progress_bar=false",
     "+data=trifeatures",
-    "enable_linear_probe=true",
-    "probe_frequency=by_fit",
-    "probe_names=[unique2]",
-    "export_predictions_dir=$predictionRoot",
+    "++data.data_module.fixed_eval_transform=true",
     "++data.data_module.data_root=$DataRoot",
     "++data.data_module.num_workers=0"
 )
+
+if ($ProfileOnly) {
+    $args += "enable_linear_probe=false"
+}
+else {
+    $args += @(
+        "enable_linear_probe=true",
+        "probe_frequency=by_fit",
+        "probe_names=[unique2]",
+        "export_predictions_dir=$predictionRoot"
+    )
+}
 
 $args += @(
     "model.model.encoder.embed_dim=256",

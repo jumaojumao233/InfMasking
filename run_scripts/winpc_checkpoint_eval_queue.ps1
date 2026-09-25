@@ -43,6 +43,9 @@ foreach ($run in @($config.Runs)) {
         "-GpuIndex", [string]$run.GpuIndex,
         "-ProjectRoot", $ProjectRoot
     )
+    if ([bool]$run.ProfileOnly) {
+        $args += "-ProfileOnly"
+    }
     "RUN_START $(Get-Date -Format o) $($run.RunName)" | Add-Content -LiteralPath $queueStatus -Encoding utf8
     try {
         & powershell.exe @args 2>> $queueError

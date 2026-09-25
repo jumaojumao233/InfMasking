@@ -133,7 +133,12 @@ def main(cfg: DictConfig):
             ckpt_path=resume_ckpt_path,
         )
     else:
-        trainer.test(model, datamodule=data_module, ckpt_path=getattr(cfg, "ckpt_path", None))
+        test_results = trainer.test(
+            model,
+            datamodule=data_module,
+            ckpt_path=getattr(cfg, "ckpt_path", None),
+        )
+        print(f"Test results: {test_results}")
 
 
 def build_root_dir(cfg: DictConfig):
@@ -142,7 +147,10 @@ def build_root_dir(cfg: DictConfig):
 
     # modify `root_dir` if in test mode to match pre-trained model's path
     if cfg.mode == "test":
-        if cfg.ckpt_path is None:
+        configured_test_root = getattr(cfg, "test_root_dir", None)
+        if configured_test_root not in (None, ""):
+            root_dir = os.path.abspath(os.path.expanduser(str(configured_test_root)))
+        elif cfg.ckpt_path is None:
             print(UserWarning("`ckpt_path` is not set during testing."))
         else:
             root_dir = os.path.join(os.path.dirname(cfg.ckpt_path), "test")

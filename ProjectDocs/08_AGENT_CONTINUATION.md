@@ -1,5 +1,15 @@
 # Agent 继续推进说明
 
+## 2026-09-25 当前接续状态：固定 test transform 复核完成
+
+上一轮随机裁剪评测发现 G0 unique2 退化后，我给 `TrifeaturesDataModule` 增加了 `fixed_eval_transform`，只对 `model="Sup"` 的 linear probe 数据模块生效，固定使用 `Resize(256) + CenterCrop(224)`。同时修复了 `mode=test` 下 TensorBoard 日志根目录被强制写到 checkpoint 目录的问题，增加 `test_root_dir`，每个评测使用自己的输出目录。
+
+固定变换的六项评测已在 winpc 串行完成，队列状态为 `QUEUE_COMPLETE`，六项退出码均为 0。seed=42、7、123 的 UniGIR - Baseline unique2 acc@1 差值分别为 `-0.050308`、`-0.038681` 和 `-0.116516`，三 seed 平均为 `-0.068502`。与上一轮随机裁剪评测平均 `-0.046986` 相比，退化方向没有消失，平均差值进一步下降 `-0.021516`。
+
+当前判断仍为 `Uncertain`。`stripes` 和 `pluses` 的 recall 在固定变换下均为 3/3 seed 下降，平均差值为 `-0.082` 和 `-0.123`。下一步是增加只读 profile 输出、原型使用分布和表示距离统计；在此之前不启动 100 epoch、不增加新的 queue 或 prototype 变体。轻薄本仍只负责 SSH、CPU 统计、文档和邮件。
+
+profile 只读诊断已经完成。三个 UniGIR seed 的 profile accuracy 为 0.775—0.813，active prototypes 为 93.6—99.0/128，prediction usage entropy 为 0.932—0.938；测试阶段不更新 EMA prototype 和 queue，没有明显 prototype collapse。seed=7 的 profile KL 最高，seed=123 的 profile 聚合量接近 seed=42，但 unique2 退化更严重。当前不能用全局 profile 统计解释类别错误，下一步导出逐样本 profile prediction、完整/掩码视图表示距离和 texture 条件统计。
+
 ## 2026-09-25 当前接续状态：G0 unique2 独立评测已完成
 
 轻薄本只用于 uv Python、SSH、日志读取、CPU 统计、文档更新和邮件通知，不运行训练或 GPU 实验。winpc 上的 G0 六项训练均已成功完成；随后启动的 unique2 checkpoint 只读评测队列也已完成，四项任务按 seed=7 Baseline、seed=7 UniGIR、seed=123 Baseline、seed=123 UniGIR 的顺序退出码均为 0。评测使用独立 `winpc_eval` 目录，未调用 `trainer.fit`，没有覆盖训练 checkpoint。

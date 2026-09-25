@@ -1,20 +1,20 @@
 # 项目进度
 
-## 当前任务：G0 unique2 诊断与通用 winpc 邮件 watchdog
+## 当前任务：G0 UniGIR profile 只读诊断
 
-任务名：在轻薄本上接通 uv 邮件通知，检查 winpc 监控链路，完成 G0 unique2 独立 checkpoint 诊断，并为后续 winpc 实验提供配置驱动的 15 分钟邮件 watchdog。
+任务名：在不重新训练的前提下，读取 G0 UniGIR checkpoint 的 profile 分支测试统计，解释 unique2 退化与 profile 学习状态之间的关系。
 启动时间：2026-09-25
-目标：轻薄本只负责邮件、日志和文档；winpc 负责训练和只读 checkpoint 评测；后续每组 winpc 实验都能独立保存状态并在异常或完成时发邮件。
-目的：让实验运行、状态通知和研究判断分开，避免继续使用写死的 G0 监控脚本，也避免把轻薄本误当成训练机器。
-做法：修复 uv 邮件运行入口；读取 winpc 的 G0 watchdog、GPU 和任务状态；复制 stdout 做 CPU-only unique2 分析；新增通用 PowerShell watchdog、配置模板、checkpoint 评测脚本和队列脚本；在 winpc 上按固定顺序完成四项剩余只读评测；本地生成三组 seed 的配对混淆分析；更新结果、接续和给用户看的文档；最后做 PowerShell 解析、JSON 解析、Python 语法、远程状态和邮件测试。
-预期结果：轻薄本邮件通知成功；通用 watchdog 能按配置检查日志、checkpoint、任务顺序和 GPU 归属；G0 unique2 的训练日志和逐样本评测证据进入结果归档；后续行动明确为固定 test transform 的只读复核。
-执行规模：6 个工作切片，涉及 5 个 PowerShell 脚本、1 个 JSON 队列配置、3 个 Python 分析脚本、1 个训练入口、1 个测试模块和 7 个项目文档；不启动训练，不修改远端训练 checkpoint；约 40—70 分钟，不含远端评测等待和 SMTP 网络等待。
+目标：轻薄本只负责邮件、日志和文档；winpc 负责只读 profile 评测；输出每个 UniGIR seed 的 `profile_kl`、profile accuracy、target confidence、usage entropy、active prototypes 和 prototype similarity 等聚合量。
+目的：判断 UniGIR 的 profile 分支是否正常学习、是否出现原型使用异常，以及这些量是否能解释 unique2 保护指标退化。
+做法：让 `main_trifeatures.py` 打印 `trainer.test()` 聚合结果；在固定 test transform 下关闭 linear probe，只读取三个 UniGIR checkpoint；使用配置驱动的串行队列和邮件通知；解析 stdout 为 JSON/Markdown；根据三 seed 统计更新结果分析。
+预期结果：三项 profile 只读评测全部成功，并得到可比较的 profile 统计；如果统计正常但 unique2 仍退化，下一步分析表示和错误类别；如果统计出现异常，先修复 profile 实现或停止扩大训练。
+执行规模：5 个工作切片，涉及 1 个主入口、1 个数据模块、1 个 PowerShell 评测脚本、1 个队列配置、1 个 Python 分析脚本、1 个测试模块和 7 个项目文档；不启动训练，不修改远端 checkpoint；约 15—30 分钟，不含远端排队和邮件网络等待。
 时间区间：仅估算本轮代码、分析和文档步骤，不含 GPU 排队、远端训练和邮件网络等待。
-当前状态：本轮实现、winpc 四项只读评测、统计分析、文档更新、私有仓库推送和最终邮件通知均已完成。轻薄本已用临时 uv 管理 Python 3.13.11 成功发送开始、阶段和最终邮件；winpc G0 六项训练全部成功，unique2 评测队列记录为 `QUEUE_COMPLETE`，四项退出码均为 0；旧 watchdog 状态为 `ALL_COMPLETE`/`EMAIL_SENT`；训练 GPU 当前没有残留训练任务。
-已完成项：确认轻薄本原 `.venv` 失效原因；邮件通知成功；只读核对 winpc G0 状态；提取并解析六个成功 stdout；完成四项 checkpoint 评测并导出逐样本预测；生成 seed=42、7、123 的混淆矩阵和配对比较；修复配对报告固定写成 seed=42 的标签问题；确认 unique2 配对 acc@1 三个 seed 均下降，平均差值 `-0.046986`；修正 G0 watchdog 完成后重复发送 `ALL_COMPLETE` 的条件；新增配置驱动 watchdog、checkpoint 评测队列和 `ProjectDocs/18_实验监控与邮件通知规范.md`；完成本地 PowerShell、JSON、Python 语法检查和 winpc DryRun。
-未完成项：固定 test transform 的只读复核尚未运行。
-阻塞与风险：轻薄本原项目 `.venv` 无法启动，当前邮件依赖临时 uv Python；独立评测的 test transform 含随机裁剪，绝对 acc@1 不能与训练末 probing 合并；当前只核实到一张 GTX 1080 Ti，不能因为暂时空闲就并行增加训练；profile 分支输出和表示变化尚未导出。
-下一步：在 winpc 上固定 test transform 做一次只读 checkpoint 复核；如果 unique2 退化方向保持，再分析 profile 输出、原型使用分布和表示距离；在此之前不启动 100 epoch 或新的机制变体。
+当前状态：固定 test transform 复核、三项 profile 只读诊断、统计分析和文档更新均已完成，两个队列均为 `QUEUE_COMPLETE`，固定复评六项和 profile 复评三项退出码均为 0，等待本轮最终邮件与私有仓库提交。
+已完成项：确认 `InfMaskingLoss` 已计算 profile 聚合量；新增 `Test results` 输出；新增 `ProfileOnly` 评测模式、三 seed profile 配置、profile 日志解析器和测试；远端 10 项测试通过；固定变换六项队列为 `QUEUE_COMPLETE`，六项退出码均为 0；unique2 三 seed 平均差值为 `-0.068502`；三个 UniGIR seed 的 profile accuracy 为 0.775—0.813，active prototypes 为 93.6—99.0/128，未发现明显 prototype collapse；Windows 日志编码容错解析已修复；已更新结果、接续、给用户、导师阶段汇报和监控规范文档。
+未完成项：发送最终邮件；提交、推送私有仓库；表示距离和类别条件 profile 统计尚未导出。
+阻塞与风险：profile 测试使用 checkpoint 中的原型和固定 test transform，但 profile 指标仍是聚合量，不能单独解释类别错误；当前只核实到一张 GTX 1080 Ti；profile 评测失败时必须停止队列。
+下一步：发送最终邮件并提交本轮改动；后续设计按类别或逐样本的 profile/表示诊断，不启动 100 epoch 或新的机制变体。
 
 ## 当前任务：接入 winpc watchdog 邮件通知
 

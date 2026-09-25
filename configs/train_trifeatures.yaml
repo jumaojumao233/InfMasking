@@ -27,6 +27,8 @@ trainer:
   num_sanity_val_steps: 1
   inference_mode: false # avoid weird bugs during linear probing
 
+test_root_dir: null
+
 optim:
   lr: 3e-4
   weight_decay: 1e-4

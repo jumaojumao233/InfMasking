@@ -10,11 +10,11 @@
 预期结果：三项 profile 只读评测全部成功，并得到可比较的 profile 统计；如果统计正常但 unique2 仍退化，下一步分析表示和错误类别；如果统计出现异常，先修复 profile 实现或停止扩大训练。
 执行规模：5 个工作切片，涉及 1 个主入口、1 个数据模块、1 个 PowerShell 评测脚本、1 个队列配置、1 个 Python 分析脚本、1 个测试模块和 7 个项目文档；不启动训练，不修改远端 checkpoint；约 15—30 分钟，不含远端排队和邮件网络等待。
 时间区间：仅估算本轮代码、分析和文档步骤，不含 GPU 排队、远端训练和邮件网络等待。
-当前状态：固定 test transform 复核、三项 profile 只读诊断、统计分析和文档更新均已完成，两个队列均为 `QUEUE_COMPLETE`，固定复评六项和 profile 复评三项退出码均为 0，等待本轮最终邮件与私有仓库提交。
+当前状态：固定 test transform 复核、三项 profile 只读诊断、统计分析、文档更新、私有仓库提交和最终邮件均已完成。两个队列均为 `QUEUE_COMPLETE`，固定复评六项和 profile 复评三项退出码均为 0；最终邮件状态为 `EMAIL_SENT`；最新提交为 `7e81352`。
 已完成项：确认 `InfMaskingLoss` 已计算 profile 聚合量；新增 `Test results` 输出；新增 `ProfileOnly` 评测模式、三 seed profile 配置、profile 日志解析器和测试；远端 10 项测试通过；固定变换六项队列为 `QUEUE_COMPLETE`，六项退出码均为 0；unique2 三 seed 平均差值为 `-0.068502`；三个 UniGIR seed 的 profile accuracy 为 0.775—0.813，active prototypes 为 93.6—99.0/128，未发现明显 prototype collapse；Windows 日志编码容错解析已修复；已更新结果、接续、给用户、导师阶段汇报和监控规范文档。
-未完成项：发送最终邮件；提交、推送私有仓库；表示距离和类别条件 profile 统计尚未导出。
+未完成项：表示距离和类别条件 profile 统计尚未导出。
 阻塞与风险：profile 测试使用 checkpoint 中的原型和固定 test transform，但 profile 指标仍是聚合量，不能单独解释类别错误；当前只核实到一张 GTX 1080 Ti；profile 评测失败时必须停止队列。
-下一步：发送最终邮件并提交本轮改动；后续设计按类别或逐样本的 profile/表示诊断，不启动 100 epoch 或新的机制变体。
+下一步：设计按类别或逐样本的 profile/表示诊断，不启动 100 epoch 或新的机制变体。
 
 ## 当前任务：接入 winpc watchdog 邮件通知
 

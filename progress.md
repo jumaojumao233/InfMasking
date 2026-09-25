@@ -10,11 +10,11 @@
 预期结果：邮件通知代码、远端秘密文件、计划任务和项目文档彼此对应；邮件服务异常只记录通知失败，不中断训练队列。
 执行规模：1 个 Python 通知器、1 个 PowerShell watchdog、1 个环境变量模板、1 个 `.gitignore`、4—6 个项目记录文件；约 8 个远端只读或同步步骤。
 时间区间：约 10—20 分钟，不含 SMTP 服务响应和 GPU 训练等待。
-当前状态：watchdog 已同步并通过 Windows PowerShell 语法检查。它已识别 seed=123 Baseline 成功并自动注册 seed=123 UniGIR；当前状态为 `WAIT`，GPU 只运行当前 G0 任务。邮件实际发送返回 `550 User has no permission`，因此当前记录为 `EMAIL_FAILED_EXIT_1`。一次 WDDM 误报已修复，修复后重新检查恢复为 `WAIT`。
-已完成项：通知器使用 `INF_MASKING_MAIL_SMTP_HOST`、`INF_MASKING_MAIL_SMTP_PORT`、`INF_MASKING_MAIL_SENDER`、`INF_MASKING_MAIL_PASSWORD`、`INF_MASKING_MAIL_RECIPIENT`；远端秘密文件为 `C:\Users\liangyelian\secrets\InfMasking\mail.env.ps1`，已限制为当前用户；远端 Python 语法、配置读取、watchdog 解析、自动注册 seed=123 UniGIR、WDDM 进程识别和两次真实状态检查均通过；本地临时秘密文件已删除。
-未完成项：163 邮箱尚未允许当前账号通过 SMTP 发信；邮件权限修正后的成功发送验证尚未完成。
-阻塞与风险：`550 User has no permission` 需要在 163 账号侧检查 SMTP 服务开关、授权码和账号权限；这部分无法通过项目代码绕过。当前训练不受邮件失败影响，但在权限修正前不会收到实际邮件。
-下一步：由用户在 163 账号侧确认 SMTP 发信权限和授权码；确认后重新验证 `EMAIL_SENT`，删除本地临时秘密文件，更新文档，提交并推送到 `private/main`。
+当前状态：watchdog 已同步并通过 Windows PowerShell 语法检查。它已识别 seed=123 Baseline 成功并自动注册 seed=123 UniGIR；12:07 的完整检查结果为 `WAIT`，GPU 只运行当前 G0 任务，状态通知为 `EMAIL_SENT`。一次 WDDM 误报已修复，修复后重新检查恢复为 `WAIT`。
+已完成项：通知器使用 `INF_MASKING_MAIL_SMTP_HOST`、`INF_MASKING_MAIL_SMTP_PORT`、`INF_MASKING_MAIL_SENDER`、`INF_MASKING_MAIL_PASSWORD`、`INF_MASKING_MAIL_RECIPIENT`；远端秘密文件为 `C:\Users\liangyelian\secrets\InfMasking\mail.env.ps1`，已限制为当前用户；通过哈希比对发现并修正了发件人变量；远端 Python 语法、配置读取、watchdog 解析、自动注册 seed=123 UniGIR、WDDM 进程识别、测试邮件和完整状态通知均通过；本地临时秘密文件已删除。
+未完成项：邮件通知链路本身已完成；G0 seed=123 UniGIR 尚未结束，最终六组结果、checkpoint 和文档归档尚未完成。
+阻塞与风险：当前没有邮件配置阻塞。后续仍需检查训练是否以 `EXIT_CODE=0` 结束、`last.ckpt` 是否存在，以及 watchdog 是否继续保持 `WAIT` 或正确推进。
+下一步：等待 seed=123 UniGIR 完成；watchdog 每 15 分钟发送状态邮件并在成功、异常或全部完成时通知，训练结束后统一读取六组结果并更新实验记录。
 
 ## 当前任务：实现并部署 G0 自动 watchdog
 

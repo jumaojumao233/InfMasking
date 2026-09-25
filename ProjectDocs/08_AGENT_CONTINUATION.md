@@ -8,7 +8,9 @@
 
 当前判断仍为 `Uncertain`。`stripes` 和 `pluses` 的 recall 在固定变换下均为 3/3 seed 下降，平均差值为 `-0.082` 和 `-0.123`。下一步是增加只读 profile 输出、原型使用分布和表示距离统计；在此之前不启动 100 epoch、不增加新的 queue 或 prototype 变体。轻薄本仍只负责 SSH、CPU 统计、文档和邮件。
 
-profile 只读诊断已经完成。三个 UniGIR seed 的 profile accuracy 为 0.775—0.813，active prototypes 为 93.6—99.0/128，prediction usage entropy 为 0.932—0.938；测试阶段不更新 EMA prototype 和 queue，没有明显 prototype collapse。seed=7 的 profile KL 最高，seed=123 的 profile 聚合量接近 seed=42，但 unique2 退化更严重。当前不能用全局 profile 统计解释类别错误，下一步导出逐样本 profile prediction、完整/掩码视图表示距离和 texture 条件统计。
+逐样本 profile 与表示诊断已经完成。为和 unique2 probe 对齐，六个 checkpoint 使用 `Sup + biased=false + task=unique2` 测试 pair，每个 seed 导出 4214 个 pair；第一轮误用自监督 `biased=true` 的 402 pair 结果已废弃。三 seed 的 UniGIR profile acc 均值按 texture 在 0.715—0.776，masked distance 相对 Baseline 的总体差值为 `-0.0011`、`-0.0046`、`-0.0049`，平均约 `-0.0035`。`pluses` 的 profile acc 较高、profile KL 较低，但 unique2 仍在三个 seed 上下降，说明退化不能简单归因于 profile 预测失败或 masked 表征普遍不稳定。
+
+当前判断仍为 `Uncertain`。profile 目标确实改变了 masked 表征与完整表征的几何关系，但这种变化可能压低 texture 线性可分性，或与 unique2 所需方向发生任务权衡。固定 test transform 下两次完整视图相同，full-view distance 为 0 只作输入对齐检查。下一步只考虑一个 profile loss weight 低成本对照；没有完成该对照前，不启动 100 epoch、不增加新的 queue 或 prototype 变体。诊断脚本、队列配置和汇总结果见 `run_scripts/export_profile_representation_diagnostics.py`、`run_scripts/winpc_g0_representation_diagnostics.config.json` 和 `outputs/g0_repdiag_aggregate.md`。
 
 ## 2026-09-25 当前接续状态：G0 unique2 独立评测已完成
 

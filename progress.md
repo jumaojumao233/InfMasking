@@ -1,20 +1,20 @@
 # 项目进度
 
-## 当前任务：G0 UniGIR profile 只读诊断
+## 当前任务：G0 逐样本 profile 与表示诊断
 
-任务名：在不重新训练的前提下，读取 G0 UniGIR checkpoint 的 profile 分支测试统计，解释 unique2 退化与 profile 学习状态之间的关系。
+任务名：在不重新训练的前提下，导出 G0 UniGIR checkpoint 的逐样本 profile 预测、完整/掩码表征距离和 texture 条件统计，解释 unique2 退化与 profile 学习状态之间的关系。
 启动时间：2026-09-25
-目标：轻薄本只负责邮件、日志和文档；winpc 负责只读 profile 评测；输出每个 UniGIR seed 的 `profile_kl`、profile accuracy、target confidence、usage entropy、active prototypes 和 prototype similarity 等聚合量。
-目的：判断 UniGIR 的 profile 分支是否正常学习、是否出现原型使用异常，以及这些量是否能解释 unique2 保护指标退化。
-做法：让 `main_trifeatures.py` 打印 `trainer.test()` 聚合结果；在固定 test transform 下关闭 linear probe，只读取三个 UniGIR checkpoint；使用配置驱动的串行队列和邮件通知；解析 stdout 为 JSON/Markdown；根据三 seed 统计更新结果分析。
-预期结果：三项 profile 只读评测全部成功，并得到可比较的 profile 统计；如果统计正常但 unique2 仍退化，下一步分析表示和错误类别；如果统计出现异常，先修复 profile 实现或停止扩大训练。
-执行规模：5 个工作切片，涉及 1 个主入口、1 个数据模块、1 个 PowerShell 评测脚本、1 个队列配置、1 个 Python 分析脚本、1 个测试模块和 7 个项目文档；不启动训练，不修改远端 checkpoint；约 15—30 分钟，不含远端排队和邮件网络等待。
+目标：轻薄本只负责邮件、日志和文档；winpc 负责只读 checkpoint 导出；输出逐样本 profile 预测、目标置信度、profile KL、masked-to-full 表征距离、两种增强的完整表征距离，以及按 texture 类别的汇总。
+目的：判断 `stripes`、`pluses` 等 unique2 退化类别是否同时出现 profile 预测不稳定或 masked 表征偏离，从而区分 profile 分支问题和下游线性探针问题。
+做法：新增独立 Python 导出脚本，不改训练入口和 checkpoint；用已有固定 test transform、Hydra 配置和 `BimodalTrifeaturesMMSSL.idx_pairs` 对齐样本顺序；先用本地静态测试确认张量形状，再在 winpc 上串行读取三个 UniGIR checkpoint；用独立分析脚本生成 JSON、CSV 和 Markdown；最后更新结果分析与接续文档。
+预期结果：三个 UniGIR checkpoint 均能完成只读导出，并得到按 texture 分类的 profile 与表示统计；如果类别间差异清楚，下一步只做针对性机制验证；如果差异不稳定，则保留当前 `Uncertain`，不进入 100 epoch 或增加机制变体。
+执行规模：4 个工作切片，涉及 1 个只读导出脚本、1 个分析脚本、1 个 PowerShell 启动脚本、1 个配置、1 个测试模块和 5—7 个项目文档；不启动训练，不修改远端 checkpoint；约 20—40 分钟，不含远端排队和邮件网络等待。
 时间区间：仅估算本轮代码、分析和文档步骤，不含 GPU 排队、远端训练和邮件网络等待。
-当前状态：固定 test transform 复核、三项 profile 只读诊断、统计分析、文档更新、私有仓库提交和最终邮件均已完成。两个队列均为 `QUEUE_COMPLETE`，固定复评六项和 profile 复评三项退出码均为 0；最终邮件状态为 `EMAIL_SENT`；最新提交为 `7e81352`。
-已完成项：确认 `InfMaskingLoss` 已计算 profile 聚合量；新增 `Test results` 输出；新增 `ProfileOnly` 评测模式、三 seed profile 配置、profile 日志解析器和测试；远端 10 项测试通过；固定变换六项队列为 `QUEUE_COMPLETE`，六项退出码均为 0；unique2 三 seed 平均差值为 `-0.068502`；三个 UniGIR seed 的 profile accuracy 为 0.775—0.813，active prototypes 为 93.6—99.0/128，未发现明显 prototype collapse；Windows 日志编码容错解析已修复；已更新结果、接续、给用户、导师阶段汇报和监控规范文档。
-未完成项：表示距离和类别条件 profile 统计尚未导出。
+当前状态：逐样本 profile 与表示诊断已经完成。六项修正后只读导出均为 `EXIT_CODE=0`，队列为 `QUEUE_COMPLETE`，每个 seed 导出 4214 个与 unique2 probe 对齐的 pair；配对比较、三 seed 汇总和文档更新均已完成；winpc 完整 unittest 28 项通过；最新提交仍为 `c41e6b4`，本轮改动尚未提交。
+已完成项：确认 `InfMaskingLoss` 已计算 profile 聚合量；新增 `Test results` 输出；新增 `ProfileOnly` 评测模式、三 seed profile 配置、profile 日志解析器和测试；远端 10 项测试通过；固定变换六项队列为 `QUEUE_COMPLETE`，六项退出码均为 0；unique2 三 seed 平均差值为 `-0.068502`；三个 UniGIR seed 的 profile-only 自监督 pair 统计未显示明显 prototype collapse；新增逐样本 JSON/CSV 导出、Baseline/UniGIR 配对表示距离分析、三 seed 汇总、PowerShell 邮件队列和 7 项相关单元测试；修正了第一轮 402 pair 与 unique2 协议不一致的问题；修正后六项均处理 4214 个 `Sup + biased=false + task=unique2` pair；已更新实验记录、结果分析、最终归档、接续、给用户、导师阶段汇报和监控规范文档。
+未完成项：尚未运行 profile loss weight 对照；本轮代码和文档尚未提交推送；当前没有 100 epoch 训练计划，也没有新增 queue 或 prototype 变体。
 阻塞与风险：profile 测试使用 checkpoint 中的原型和固定 test transform，但 profile 指标仍是聚合量，不能单独解释类别错误；当前只核实到一张 GTX 1080 Ti；profile 评测失败时必须停止队列。
-下一步：设计按类别或逐样本的 profile/表示诊断，不启动 100 epoch 或新的机制变体。
+下一步：先提交并推送本轮代码和文档；随后根据导师选择，运行一个只改变 profile loss weight 的低成本对照，或暂停机制扩展转向 MOSI 和论文材料整理；不启动 100 epoch 或新的机制变体。
 
 ## 当前任务：接入 winpc watchdog 邮件通知
 

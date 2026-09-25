@@ -1,0 +1,60 @@
+{
+  "ExperimentName": "InfMasking-G0-RepresentationDiag-liangyl",
+  "NotifyIntervalSeconds": 900,
+  "Runs": [
+    {
+      "RunName": "winpc_g0_repdiag_s42_baseline",
+      "Method": "baseline",
+      "Seed": 42,
+      "CheckpointPath": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s42_baseline\\checkpoints\\last.ckpt",
+      "DataRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\outputs\\g0_repdiag_s42_baseline",
+      "GpuIndex": 0
+    },
+    {
+      "RunName": "winpc_g0_repdiag_s42_unigir",
+      "Method": "unigir",
+      "Seed": 42,
+      "CheckpointPath": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s42_unigir\\checkpoints\\last.ckpt",
+      "DataRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\outputs\\g0_repdiag_s42_unigir",
+      "GpuIndex": 0
+    },
+    {
+      "RunName": "winpc_g0_repdiag_s7_baseline",
+      "Method": "baseline",
+      "Seed": 7,
+      "CheckpointPath": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s7_baseline_retry1\\checkpoints\\last.ckpt",
+      "DataRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\outputs\\g0_repdiag_s7_baseline",
+      "GpuIndex": 0
+    },
+    {
+      "RunName": "winpc_g0_repdiag_s7_unigir",
+      "Method": "unigir",
+      "Seed": 7,
+      "CheckpointPath": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s7_unigir\\checkpoints\\last.ckpt",
+      "DataRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\outputs\\g0_repdiag_s7_unigir",
+      "GpuIndex": 0
+    },
+    {
+      "RunName": "winpc_g0_repdiag_s123_baseline",
+      "Method": "baseline",
+      "Seed": 123,
+      "CheckpointPath": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s123_baseline\\checkpoints\\last.ckpt",
+      "DataRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\outputs\\g0_repdiag_s123_baseline",
+      "GpuIndex": 0
+    },
+    {
+      "RunName": "winpc_g0_repdiag_s123_unigir",
+      "Method": "unigir",
+      "Seed": 123,
+      "CheckpointPath": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\winpc_runs\\InfMasking\\bimodal_trifeatures\\winpc_g4_g0_trifeatures_s123_unigir\\checkpoints\\last.ckpt",
+      "DataRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\dataset\\data\\trifeatures_g0_seed20260924",
+      "OutputRoot": "C:\\Users\\liangyelian\\work\\InfMasking_desktop_20260923\\outputs\\g0_repdiag_s123_unigir",
+      "GpuIndex": 0
+    }
+  ]
+}

@@ -1,20 +1,20 @@
 # 项目进度
 
-## 当前任务：检查 G0 seed=7 UniGIR 完成并启动 seed=123 Baseline
+## 当前任务：实现并部署 G0 自动 watchdog
 
-任务名：检查 G0 seed=7 UniGIR 的完成状态、归档 checkpoint，并启动 G0 seed=123 Baseline。
-启动时间：2026-09-25 06:56（Asia/Shanghai）
-目标：确认 seed=7 UniGIR 已正常结束，并让 seed=123 Baseline 在空闲 GPU 上脱离 SSH 会话运行。
-目的：保持 G0 的 Baseline/UniGIR 成对协议、独立目录和可追溯 checkpoint 记录。
-做法：通过 `ssh winpc` 只读检查远端任务、进程、GPU 和日志；核对 seed=7 UniGIR checkpoint 的远端 SHA256；注册项目已有的 Windows 计划任务脚本启动 seed=123 Baseline。
-预期结果：seed=123 Baseline 使用固定 G0 数据和参数启动，SSH 断开后仍继续运行；seed=7 UniGIR 的结果和 checkpoint 有明确归档记录。
-执行规模：4 组远程只读查询、1 次本地 checkpoint 归档、1 次计划任务注册、1 次文档更新；不停止进程，不修改数据和训练代码。
-时间区间：约 10—20 分钟，不含 GPU 训练等待和 checkpoint 网络传输。
-当前状态：seed=7 UniGIR 于 `2026-09-25 08:14:51` 写入 `END`，以 `EXIT_CODE=0` 完成；四项 probing 为 share `0.952/0.998`、unique1 `0.810/0.974`、unique2 `0.753/0.964`、synergy `0.574/0.813`，格式为 `acc@1/ROC AUC`。seed=7 UniGIR checkpoint 远端大小为 96902080 bytes，SHA256 为 `D3C467CEDE0C621C323EFACE60B335ADA38420C747F2142205FDD22F730AD9FF`。seed=123 Baseline 已于 `2026-09-25 10:28:28` 进入 `Running`，GPU 使用约 3623 MiB。
-已完成项：确认 seed=7 UniGIR 正常退出；确认四项 probing；确认 seed=7 UniGIR 的运行参数和 checkpoint 哈希；确认 seed=123 Baseline 的 DataRoot、pair seed、model seed、训练 epoch、max_size 和 probing 参数；确认计划任务已脱离 SSH 会话启动。
-未完成项：seed=7 UniGIR checkpoint 的本地传输和哈希核对仍在进行；seed=123 Baseline 尚未完成；seed=123 UniGIR 尚未启动；G0 最终 test 结果尚未统一归档。
-阻塞与风险：本地 `scp` 归档不能使用半文件进行校验；seed=123 Baseline 结束前不启动 seed=123 UniGIR；当前仍不能根据单个 seed 的结果下 G0 最终方法结论。
-下一步：等待并监控 seed=123 Baseline 的 `END` 和退出码；完成 seed=7 UniGIR checkpoint 本地哈希核对后，启动 seed=123 UniGIR。
+任务名：实现并部署 `winpc_g4_watchdog.ps1`，自动检查并按固定顺序推进 G0。
+启动时间：2026-09-25（Asia/Shanghai）
+目标：让 winpc 每 15 分钟检查当前 G0 任务，并在满足条件时自动启动下一组。
+目的：避免人工询问间隔导致任务完成后 GPU 空闲，也避免异常任务被自动跳过。
+做法：在 `run_scripts` 中实现状态、日志、checkpoint、GPU 占用和计划任务检查；遇到非零退出码、CUDA 错误、checkpoint 缺失或未知 GPU 占用时写入停止事件；通过 Windows 计划任务在 winpc 上部署并验证。
+预期结果：seed=123 Baseline 成功后自动启动 seed=123 UniGIR；两组都成功后写出 G0 全部完成事件；任一停止条件出现时不再启动后续任务。
+执行规模：1 个本地 PowerShell 脚本、1 次远端同步、1 个 Windows 计划任务、4—6 组只读验证；不修改数据，不停止已有训练进程。
+时间区间：约 15—25 分钟，不含计划任务等待和 GPU 训练时间。
+当前状态：seed=123 Baseline 已于 `2026-09-25 10:28:28` 启动，当前 watchdog 检查为 `WAIT`；seed=7 UniGIR 已以 `EXIT_CODE=0` 完成；watchdog 已部署，计划任务间隔为 15 分钟。
+已完成项：G0 前四组及 seed=123 Baseline 的固定参数已记录；现有启动脚本 `winpc_schedule_experiment.ps1` 已确认可复用；watchdog 已通过本地语法解析、winpc DryRun 和一次真实执行验证；WDDM 桌面进程兼容性问题已修复；正式状态文件当前记录为 `WAIT`。
+未完成项：seed=123 Baseline 尚未完成；seed=123 UniGIR 尚未启动；watchdog 尚未经历一次真实的成功转移并自动注册 seed=123 UniGIR；G0 最终 test 结果尚未统一归档。
+阻塞与风险：watchdog 不能替代最终人工复核；GPU 占用识别依赖 `nvidia-smi`、进程名回退和 Windows 进程归属；seed=123 Baseline 仍在运行时不能启动 UniGIR；任何 `STOP` 事件都需要先人工读取原因。
+下一步：等待 15 分钟计划任务再次检查；seed=123 Baseline 成功且 checkpoint 存在、GPU 安全时自动注册 seed=123 UniGIR；两组完成后再由 Codex 统一读取六组结果并更新 Markdown。
 
 ## 当前任务：整理并上传 GitHub 私有仓库
 

@@ -2,6 +2,12 @@
 
 更新时间：2026-09-25
 
+## 0. 2026-09-26：V3 smoke 与短跑安排
+
+V3 已完成 1 epoch smoke。smoke 使用 G0 封存数据、seed=42、`max_size=1024`、GPU 0 和独立运行目录，退出码为 0，`last.ckpt` 已生成。TensorBoard 记录的 prototype graph 指标为：连通分量数 `1`、不可达 pair 数 `0`、平均度约 `9.47`、平均边权约 `1.329`。这说明当前 `graph_k=8`、对称 k-NN、`graph_anchors=4` 的第一版实现可以完成训练和验证流程。
+
+随后已启动 V2-Cosine 与 V3-Geodesic 的 10 epoch 成对短跑。两项固定使用 G0 数据、model seed=42、pair seed=42、`max_size=10000`、queue=1024、$\alpha=0.25$、`cross=false` 和 `by_fit` probing；V2 先运行，V3 由每 15 分钟运行的 G5 watchdog 自动接续。当前只有 smoke 工程结果，没有 V3 性能结论。
+
 ## 1. 审计结论
 
 这份完整 idea 的三层结构是清楚的：InfMasking 提供掩码协同学习，在线 prototype 提供全局参照系，prototype graph 上的 shortest path 提供流形关系。这个结构可以作为论文方法路线，但当前实现只覆盖前两层。
@@ -64,7 +70,7 @@ $$
 
 ### 2.3 Sinkhorn 不能在 V3 中被无意删除
 
-只使用 \`softmax(-d_G / tau_g)\` 会把 prototype 的访问频率、graph 度数和距离结构混在一起。为了和 V2 保持可比，我建议 V3 也对完整视图的 geodesic score 使用同一套 balanced assignment：
+只使用 `softmax(-d_G / tau_g)` 会把 prototype 的访问频率、graph 度数和距离结构混在一起。为了和 V2 保持可比，我建议 V3 也对完整视图的 geodesic score 使用同一套 balanced assignment：
 
 $$
 q_i^{\mathrm{geo}}
@@ -155,9 +161,9 @@ V3 的 prototype graph 不应在每个样本的反向传播路径中更新。第
 
 当前 V2 的正式证据如下：
 
-- G0 synergy ROC AUC 三个 seed 全部上升，平均 \`+0.026\`；
-- G0 unique2 Acc@1 三个 seed 全部下降，平均 \`-0.053\`；
-- G0 四任务平均 Acc@1 下降 \`-0.010\`，四任务平均 AUC 上升 \`+0.003\`；
+- G0 synergy ROC AUC 三个 seed 全部上升，平均 `+0.026`；
+- G0 unique2 Acc@1 三个 seed 全部下降，平均 `-0.053`；
+- G0 四任务平均 Acc@1 下降 `-0.010`，四任务平均 AUC 上升 `+0.003`；
 - MOSI 三个 seed 的 Acc 和 AUC 都上升；
 - unique2 固定变换下仍然下降，profile usage entropy 和 active prototype 数没有显示明显 collapse；
 - alpha=0.125 在 MOSI 上低于 alpha=0.25，已经停止继续搜索 loss weight。

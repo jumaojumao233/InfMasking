@@ -1,5 +1,33 @@
 # 项目进度
 
+## 当前任务：把 V3 接入 winpc 调度链并运行 1 epoch smoke
+
+任务名：V3-Geodesic winpc smoke 与后续短预算对照准备
+
+启动时间：2026-09-26，Asia/Shanghai
+
+目标：让 `geodesic` 方法通过现有的 Windows 计划任务、独立日志、checkpoint 和邮件 watchdog 运行，并先完成 1 epoch smoke。
+
+目的：验证 V3 的 Hydra 配置、原型图统计、`last.ckpt` 保存和远程调度链能够一起工作，再决定是否进入与 V2-Cosine 相同协议的短预算对照。
+
+做法：扩展 `winpc_start_experiment.ps1` 和 `winpc_schedule_experiment.ps1` 支持 `geodesic`；新增单独的 watchdog 配置；在 winpc 启动前只读检查 GPU 和脚本解析；启动后检查 status、stdout、stderr、checkpoint 以及图连通性日志。
+
+预期结果：得到独立的 V3 smoke 运行目录；若退出码为 0、`last.ckpt` 存在且没有 CUDA 或图计算错误，再安排 V2/V3 固定协议短跑。
+
+执行规模：更新 2 个 PowerShell 调度脚本，新增 1 个 JSON 配置，更新本进度和实验记录；远程运行 1 个 1 epoch smoke，不启动 100 epoch。
+
+时间区间：本地修改与远端预检约 5—10 分钟；smoke 运行约 5—15 分钟，不含 GPU 排队和下载等待。
+
+当前状态：V3 smoke 已完成，退出码为 0，`last.ckpt` 存在；图指标已写入 TensorBoard，当前准备启动 V2/V3 固定协议短跑。
+
+已完成项：V2 梯度冲突诊断完成；V3 测地原型轮廓代码、单元测试和 Hydra 配置解析通过；winpc 远端环境已有可用的 V3 代码和测试。
+
+未完成项：V2/V3 固定协议短跑尚未完成；正式性能比较和多 seed 复现尚未开始。
+
+阻塞与风险：V3 还没有性能结论；原型图的连通性和不可达 pair 需要由 smoke 日志确认；smoke 若失败，后续对照实验暂停，只修复运行正确性问题。
+
+下一步：用相同的 G0 数据、seed=42、10 epoch、`max_size=10000` 和 probing 协议串行运行 V2-Cosine 与 V3-Geodesic；若任一任务失败或 checkpoint 缺失，watchdog 停止后续任务。
+
 ## 当前任务：审计完整 UniGIR idea 并启动 V2 梯度冲突诊断
 
 任务名：核对 UniGIR V2 与 V3 测地轮廓的实现边界，先完成 V2 unique2 退化的梯度冲突诊断。

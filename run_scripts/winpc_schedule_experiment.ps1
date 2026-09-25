@@ -4,7 +4,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$RunName,
     [Parameter(Mandatory = $true)]
-    [ValidateSet("baseline", "unigir")]
+    [ValidateSet("baseline", "unigir", "geodesic")]
     [string]$Method,
     [Parameter(Mandatory = $true)]
     [int]$Seed,

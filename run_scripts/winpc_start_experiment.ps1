@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$RunName,
     [Parameter(Mandatory = $true)]
-    [ValidateSet("baseline", "unigir")]
+    [ValidateSet("baseline", "unigir", "geodesic")]
     [string]$Method,
     [Parameter(Mandatory = $true)]
     [int]$Seed,
@@ -29,7 +29,11 @@ New-Item -ItemType Directory -Force -Path $runRoot, $logRoot | Out-Null
 $stdoutLog = Join-Path $logRoot "$RunName.stdout.log"
 $stderrLog = Join-Path $logRoot "$RunName.stderr.log"
 $statusLog = Join-Path $logRoot "$RunName.status.log"
-$modelConfig = if ($Method -eq "baseline") { "infmasking" } else { "unigir" }
+$modelConfig = switch ($Method) {
+    "baseline" { "infmasking"; break }
+    "unigir" { "unigir"; break }
+    "geodesic" { "unigir_geodesic"; break }
+}
 
 $args = @(
     "seed=$Seed",
@@ -68,7 +72,7 @@ if ($ResumeCkptPath -ne "") {
     $args += "resume_ckpt_path=$ResumeCkptPath"
 }
 
-if ($Method -eq "unigir") {
+if ($Method -in @("unigir", "geodesic")) {
     $args += @(
         "model.model.loss_kwargs.profile_kwargs.num_prototypes=128",
         "model.model.loss_kwargs.profile_kwargs.queue_size=$QueueSize",

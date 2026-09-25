@@ -1,0 +1,29 @@
+{
+  "ExperimentName": "G5-V3-smoke",
+  "UserSuffix": "liangyl",
+  "GpuIndex": 0,
+  "AutoStart": true,
+  "DataRoot": "dataset\\data\\trifeatures_g0_seed20260924",
+  "RunRoot": "winpc_runs\\InfMasking\\bimodal_trifeatures",
+  "LogRoot": "winpc_logs",
+  "ScheduleScript": "run_scripts\\winpc_schedule_experiment.ps1",
+  "NotifyScript": "run_scripts\\winpc_g4_notify.py",
+  "NotifyPython": ".venv\\Scripts\\python.exe",
+  "MailEnvScript": "%USERPROFILE%\\secrets\\InfMasking\\mail.env.ps1",
+  "Runs": [
+    {
+      "Order": 1,
+      "TaskName": "InfMasking-G5-V3-Smoke-s42-liangyl",
+      "RunName": "winpc_g5_v3_smoke_s42",
+      "Method": "geodesic",
+      "Seed": 42,
+      "MaxEpochs": 1,
+      "MaxSize": 1024,
+      "PairSeed": 42,
+      "QueueSize": 1024,
+      "EnableLinearProbe": false,
+      "ShuffleProfile": false,
+      "CudaLaunchBlocking": false
+    }
+  ]
+}

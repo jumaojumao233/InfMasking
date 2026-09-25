@@ -1,5 +1,13 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：V3 smoke 通过，V2/V3 短预算对照运行中
+
+V3-Geodesic 已经接入 `winpc` 的统一调度、独立日志、checkpoint 和 15 分钟 watchdog。1 epoch smoke 使用 G0 封存数据、model seed=42、pair seed=42、`max_size=1024`，以 `EXIT_CODE=0` 完成并生成独立的 `last.ckpt`。TensorBoard 中记录的图指标为：连通分量数 `1`、不可达 prototype pair `0`、平均度约 `9.47`、平均边权约 `1.329`。
+
+当前正在运行 G5 的 V2-Cosine/V3-Geodesic 成对短跑。两项均使用 G0 数据、seed=42、10 epoch、`max_size=10000`、queue=1024、$\alpha=0.25$、`cross=false` 和 `by_fit` probing；V2 先运行，V2 成功且 `last.ckpt` 存在后，watchdog 自动启动 V3。配置文件为 `run_scripts/winpc_g5_v2_v3_pair.config.json`，远端 watchdog 任务名为 `InfMasking-G5-Watchdog-liangyl`。
+
+当前不能写 V3 的性能结论。短跑完成后，必须同时检查 `synergy`、`unique2`、四任务平均指标、profile 诊断和 graph 指标；若任一任务失败、CUDA 报错或 checkpoint 缺失，停止后续 seed 扩展。
+
 ## 2026-09-26 当前接续状态：V2 梯度诊断完成，V3 代码已通过预检
 
 当前主线已经从单纯整理 V2 结果进入 V2 机制边界和 V3 geodesic 实现阶段。完整 UniGIR 包含三层：InfMasking、prototype cosine/global profile、prototype graph geodesic profile。当前 InfMasking 和 V2-Cosine 已完成主要实验；V3-Geodesic 已实现代码骨架，但还没有训练结果，不能把 V3 写成已验证方法。

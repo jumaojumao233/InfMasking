@@ -251,7 +251,11 @@ function Get-GpuSnapshot {
                     $processPath = $processName
                 }
             }
-            $desktopProcess = ($processPath + " " + $processName + " " + $commandLine) -match "(?i)\\Windows\\|\\WindowsApps\\microsoft\.|\\Microsoft\\|\\Edge\\|dwm\.exe|WUDFHost\.exe|^dwm$|^WUDFHost$|^csrss$|^winlogon$|^explorer$|^SearchApp$|^ShellExperienceHost$|^TextInputHost$|^msedgewebview2$|^msedge$|^PhoneExperienceHost$"
+            $desktopProcess = (
+                ($processPath -match "(?i)\\Windows\\|\\WindowsApps\\|\\Microsoft\\|\\Edge\\") -or
+                ($commandLine -match "(?i)\\Windows\\|\\WindowsApps\\|\\Microsoft\\|\\Edge\\") -or
+                ($processName -match "(?i)^(dwm|dwm\.exe|WUDFHost|WUDFHost\.exe|csrss|csrss\.exe|winlogon|winlogon\.exe|explorer|explorer\.exe|SearchApp|SearchApp\.exe|ShellExperienceHost|ShellExperienceHost\.exe|TextInputHost|TextInputHost\.exe|msedgewebview2|msedgewebview2\.exe|msedge|msedge\.exe|PhoneExperienceHost|PhoneExperienceHost\.exe)$")
+            )
             $allowed = $desktopProcess -or ($ownerName -eq $userName -and $knownRun)
             $apps += [pscustomobject]@{
                 Pid = $processId

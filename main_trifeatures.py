@@ -68,7 +68,10 @@ def main(cfg: DictConfig):
 
     # Linear probing on each task can be disabled for low-cost diagnostics.
     enable_linear_probe = getattr(cfg, "enable_linear_probe", True)
-    downstream_names = ["share", "unique1", "unique2", "synergy"]
+    configured_probe_names = getattr(cfg, "probe_names", None)
+    downstream_names = list(configured_probe_names) if configured_probe_names else [
+        "share", "unique1", "unique2", "synergy"
+    ]
     downstream_data_modules = [instantiate(cfg.data.data_module, model="Sup", biased=False, task=t)
                                for t in downstream_names] if enable_linear_probe else []
     experiment_root = os.path.abspath(build_root_dir(cfg))
@@ -110,6 +113,7 @@ def main(cfg: DictConfig):
         checkpoint_callback,
         probe_frequency,
         early_stopping_callback,
+        downstream_names=downstream_names,
     )
     trainer = instantiate(
         cfg.trainer,
@@ -186,16 +190,20 @@ def build_training_callbacks(
         downstream_data_modules,
         checkpoint_callback: ModelCheckpoint,
         probe_frequency: str,
-        early_stopping_callback=None):
+        early_stopping_callback=None,
+        downstream_names=None):
     """Keep checkpointing independent from optional linear probing."""
+    if downstream_names is None:
+        downstream_names = ["share", "unique1", "unique2", "synergy"]
     callbacks = [EpochInfoCallback(), TotalEpochsCallback(), checkpoint_callback]
     if getattr(cfg, "enable_linear_probe", True):
         callbacks.append(
             LinearProbingCallback(
                 downstream_data_modules,
-                names=["share", "unique1", "unique2", "synergy"],
+                names=downstream_names,
                 val_loaders=False,
                 frequency=probe_frequency,
+                export_predictions_dir=getattr(cfg, "export_predictions_dir", None)
             )
         )
         if getattr(cfg, "enable_early_stopping", False):

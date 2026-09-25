@@ -7,6 +7,8 @@ checkpoint_mode: "max"
 checkpoint_dir: null
 resume_ckpt_path: null
 logger_version: 0
+export_predictions_dir: null
+probe_names: null
 enable_early_stopping: false
 early_stopping_patience: 10
 

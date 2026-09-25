@@ -1,5 +1,21 @@
 # Agent 继续推进说明
 
+## 2026-09-25 当前接续状态：G0 unique2 独立评测已完成
+
+轻薄本只用于 uv Python、SSH、日志读取、CPU 统计、文档更新和邮件通知，不运行训练或 GPU 实验。winpc 上的 G0 六项训练均已成功完成；随后启动的 unique2 checkpoint 只读评测队列也已完成，四项任务按 seed=7 Baseline、seed=7 UniGIR、seed=123 Baseline、seed=123 UniGIR 的顺序退出码均为 0。评测使用独立 `winpc_eval` 目录，未调用 `trainer.fit`，没有覆盖训练 checkpoint。
+
+独立评测结果为：seed=42 的 UniGIR - Baseline acc@1 为 `-0.013289`，seed=7 为 `-0.035833`，seed=123 为 `-0.091837`，三 seed 平均为 `-0.046986`。同一 seed 的两种方法使用相同的 `y_true` 顺序。当前 test transform 包含随机裁剪，因此绝对数值不能直接和训练末 probing 合并；配对差值支持 unique2 退化方向。`stripes`、`noise`、`zigzags`、`pluses` 的类别 recall 在 3/3 seed 上下降，`pluses` 平均下降 `-0.098`。
+
+邮件链路已经覆盖本轮 Codex 工作通知、winpc 训练 watchdog 和 checkpoint 评测队列。轻薄本使用临时 uv 管理的 Python 3.13.11 发送邮件；邮箱账号和授权码只在被 `.gitignore` 忽略的环境变量文件中，不能提交仓库。后续 winpc 实验继续使用独立目录、checkpoint、状态日志和 15 分钟邮件 watchdog；当前不要因为 GPU 空闲就增加并行训练，下一步先固定 test transform 复核 unique2。
+
+## 2026-09-25 当前接续状态：邮件链路已覆盖轻薄本和通用 winpc watchdog
+
+轻薄本只用于 uv Python、邮件、日志读取和文档分析，不运行训练。由于原 `.venv` 指向失效的 Python 3.13 安装，当前邮件测试使用临时目录中的 uv 管理 Python 3.13.11；项目训练环境没有被修改。邮件账号、授权码和收件地址均来自被 `.gitignore` 忽略的本地环境变量文件。
+
+winpc 当前 G0 六项任务全部成功，GPU 空闲，旧版 G0 watchdog 最近一次状态为 `ALL_COMPLETE` 且 `EMAIL_SENT`。旧脚本仍保留作 G0 历史监控，但它把 G0 任务列表写死。新增 `run_scripts/winpc_experiment_watchdog.ps1` 和 `run_scripts/winpc_experiment_watchdog.config.example.json`，后续实验使用配置驱动的任务顺序、独立日志、checkpoint 和邮件通知。规范见 `ProjectDocs/18_实验监控与邮件通知规范.md`。
+
+G0 unique2 类别级日志分析已完成：`pluses`、`stripes`、`zigzags` 三个类别在 3/3 个 seed 上下降；`pluses` 平均下降 `-0.092` 且样本标准差 `0.003`。当前只有 `acc_per_class`，没有逐样本预测，不能直接声称已经得到混淆矩阵。接续任务是 winpc 独立 checkpoint 评测，导出 `y_true`、`y_pred`、混淆矩阵和 logits；在此之前不启动 100 epoch 或新的机制变体。
+
 ## 2026-09-25 当前接续状态：G0 六项任务已完成，当前判断为 Uncertain
 
 G3 MOSI 三 seed 已完成，UniGIR 的 acc@1 和 ROC AUC 在 3/3 个 seed 上高于 Baseline，平均差值为 +0.041 和 +0.037，满足进入 G0 的条件。G0 启动前已核对封存数据清单、脚本哈希和 Baseline/UniGIR 的 Hydra 实际解析。

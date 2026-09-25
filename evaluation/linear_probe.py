@@ -36,6 +36,7 @@ class LinearProbingCallback(Callback):
                  max_iter: int = 100,
                  frequency: str = "by_epoch",
                  logging_level: str = "INFO",
+                 export_predictions_dir: Optional[str] = None,
                  **extraction_kwargs):
         """
         :param downstream_data_modules: List of dataset to evaluate
@@ -63,6 +64,7 @@ class LinearProbingCallback(Callback):
             raise NotImplementedError("`multilabel` linear probing not implemented with PyTorch.")
         self.logging_level = logging_level
         self.extraction_kwargs = extraction_kwargs
+        self.export_predictions_dir = export_predictions_dir
         if self.names is None:
             self.names = [d.test_dataloader().__class__.__name__ for d in downstream_data_modules]
 
@@ -83,12 +85,23 @@ class LinearProbingCallback(Callback):
                 val_features, val_labels = None, None
                 if self.val_loaders:
                     val_features, val_labels = pl_module.extract_features(val_loader, **self.extraction_kwargs)
-                scores_ = (
-                    evaluate_linear_probe(train_features, train_labels, test_features,
-                                          test_labels, val_features, val_labels,
-                                          multilabel=self.multilabel, use_sklearn=self.use_sklearn,
-                                          max_iter=self.max_iter,
-                                          fastsearch=self.fastsearch, logging_level=self.logging_level))
+                evaluated = evaluate_linear_probe(
+                    train_features, train_labels, test_features, test_labels,
+                    val_features, val_labels,
+                    multilabel=self.multilabel, use_sklearn=self.use_sklearn,
+                    max_iter=self.max_iter, fastsearch=self.fastsearch,
+                    logging_level=self.logging_level,
+                    return_predictions=self.export_predictions_dir is not None,
+                )
+                if self.export_predictions_dir is None:
+                    scores_ = evaluated
+                else:
+                    scores_, prediction_payload = evaluated
+                    export_predictions(
+                        self.export_predictions_dir,
+                        dataset,
+                        prediction_payload,
+                    )
                 for k, v in scores_.items():
                     scores[k].append(v)
                 print('Linear probe ({d}): {scores}'
@@ -171,7 +184,8 @@ def evaluate_linear_probe(
     combine_trainval=True,
     use_sklearn=False,
     fastsearch=False,
-    logging_level="INFO"
+    logging_level="INFO",
+    return_predictions=False,
 ):
     """
     Args:
@@ -208,8 +222,16 @@ def evaluate_linear_probe(
         fastsearch=fastsearch,
         logger=logger
     )
-    test_acc = test_linear_probe(classifier, test_feats, test_labels, use_mean_accuracy,
-                                 use_sklearn=use_sklearn, multilabel=multilabel, logger=logger)
+    test_acc = test_linear_probe(
+        classifier,
+        test_feats,
+        test_labels,
+        use_mean_accuracy,
+        use_sklearn=use_sklearn,
+        multilabel=multilabel,
+        logger=logger,
+        return_predictions=return_predictions,
+    )
 
     del classifier
     torch.cuda.empty_cache()
@@ -350,7 +372,8 @@ def train_linear_probe(
 
 def test_linear_probe(
     linear_classifier, test_feats, test_labels, use_mean_accuracy,
-        use_sklearn=False, num_classes=None, multilabel=False, logger=None
+        use_sklearn=False, num_classes=None, multilabel=False, logger=None,
+        return_predictions=False,
 ):
     if logger is None:
         logger = logging.getLogger("Linear probing")
@@ -371,7 +394,13 @@ def test_linear_probe(
         f1_weighted = float(f1_weighted_score(predictions, test_labels))
         acc1_sklearn = accuracy_score(test_labels.cpu().numpy(), predictions.cpu().numpy())
         logger.info(f"Test acc@1/acc@1(subset)/f1-score/f1-weighted: {accuracy1:.3f}/{acc1_sklearn:.3f}/{f1_mean:.3f}/{f1_weighted:.3f}")
-        return {"acc1": accuracy1, "f1_mean": f1_mean, "f1_weighted": f1_weighted, "acc1(subset)": acc1_sklearn}
+        scores = {"acc1": accuracy1, "f1_mean": f1_mean, "f1_weighted": f1_weighted, "acc1(subset)": acc1_sklearn}
+        if return_predictions:
+            return scores, {
+                "y_true": test_labels.detach().cpu().tolist(),
+                "y_pred": predictions.detach().cpu().tolist(),
+            }
+        return scores
     else:
         NUM_C = len(set(test_labels.cpu().numpy())) if num_classes is None else num_classes
         acc1 = MulticlassAccuracy(num_classes=NUM_C, average=average).to(test_feats.device)
@@ -391,7 +420,26 @@ def test_linear_probe(
         accuracy_per_class = [float(x) for x in acc_per_class(torch.as_tensor(predictions), test_labels)]
         auc = float(roc_auc(torch.as_tensor(predictions).detach().cpu(), test_labels.detach().cpu()))
         logger.info(f"Test acc@1/acc@5/acc_per_class/roc_auc: {accuracy1:.3f}/{accuracy5:.3f}/{accuracy_per_class}/{auc}")
-        return {"acc1": accuracy1, "acc5": accuracy5, "roc_auc": auc}
+        scores = {"acc1": accuracy1, "acc5": accuracy5, "roc_auc": auc}
+        if return_predictions:
+            return scores, {
+                "y_true": test_labels.detach().cpu().tolist(),
+                "y_pred": torch.as_tensor(predictions).argmax(dim=-1).detach().cpu().tolist(),
+                "probabilities": torch.as_tensor(predictions).detach().cpu().tolist(),
+            }
+        return scores
+
+
+def export_predictions(export_dir, dataset, payload):
+    """Write probe predictions for an explicit, read-only diagnostic run."""
+    import json
+    from pathlib import Path
+
+    path = Path(export_dir)
+    path.mkdir(parents=True, exist_ok=True)
+    (path / f"{dataset}.json").write_text(
+        json.dumps(payload, indent=2), encoding="utf-8"
+    )
 
 def _fit_logreg(
     feats: torch.Tensor,

@@ -19,6 +19,7 @@ overnight_logs/
 seed7_logs/
 seed7_noqueue_logs/
 gpu_pilot_logs/
+winpc_logs/
 
 # Local tool state
 .claude/

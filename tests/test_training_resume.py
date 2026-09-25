@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+import json
 
 from omegaconf import OmegaConf
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -11,6 +12,7 @@ from main_trifeatures import (
     resolve_checkpoint_dir,
     resolve_resume_ckpt_path,
 )
+from evaluation.linear_probe import export_predictions
 
 
 class TrainingResumeTest(unittest.TestCase):
@@ -63,6 +65,17 @@ class TrainingResumeTest(unittest.TestCase):
         )
         self.assertIn(checkpoint_callback, callbacks)
         self.assertEqual(len(callbacks), 3)
+
+    def test_probe_predictions_are_exported_to_a_task_file(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            export_predictions(
+                temp_dir,
+                "unique2",
+                {"y_true": [0, 1], "y_pred": [0, 0], "probabilities": [[0.9, 0.1], [0.6, 0.4]]},
+            )
+            output = Path(temp_dir) / "unique2.json"
+            self.assertTrue(output.is_file())
+            self.assertEqual(json.loads(output.read_text())["y_pred"], [0, 0])
 
 
 if __name__ == "__main__":

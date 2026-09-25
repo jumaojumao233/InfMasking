@@ -1,5 +1,21 @@
 # 项目进度
 
+## 当前任务：G0 unique2 诊断与通用 winpc 邮件 watchdog
+
+任务名：在轻薄本上接通 uv 邮件通知，检查 winpc 监控链路，完成 G0 unique2 独立 checkpoint 诊断，并为后续 winpc 实验提供配置驱动的 15 分钟邮件 watchdog。
+启动时间：2026-09-25
+目标：轻薄本只负责邮件、日志和文档；winpc 负责训练和只读 checkpoint 评测；后续每组 winpc 实验都能独立保存状态并在异常或完成时发邮件。
+目的：让实验运行、状态通知和研究判断分开，避免继续使用写死的 G0 监控脚本，也避免把轻薄本误当成训练机器。
+做法：修复 uv 邮件运行入口；读取 winpc 的 G0 watchdog、GPU 和任务状态；复制 stdout 做 CPU-only unique2 分析；新增通用 PowerShell watchdog、配置模板、checkpoint 评测脚本和队列脚本；在 winpc 上按固定顺序完成四项剩余只读评测；本地生成三组 seed 的配对混淆分析；更新结果、接续和给用户看的文档；最后做 PowerShell 解析、JSON 解析、Python 语法、远程状态和邮件测试。
+预期结果：轻薄本邮件通知成功；通用 watchdog 能按配置检查日志、checkpoint、任务顺序和 GPU 归属；G0 unique2 的训练日志和逐样本评测证据进入结果归档；后续行动明确为固定 test transform 的只读复核。
+执行规模：6 个工作切片，涉及 5 个 PowerShell 脚本、1 个 JSON 队列配置、3 个 Python 分析脚本、1 个训练入口、1 个测试模块和 7 个项目文档；不启动训练，不修改远端训练 checkpoint；约 40—70 分钟，不含远端评测等待和 SMTP 网络等待。
+时间区间：仅估算本轮代码、分析和文档步骤，不含 GPU 排队、远端训练和邮件网络等待。
+当前状态：本轮实现、winpc 四项只读评测和统计分析已完成，准备收尾。轻薄本已用临时 uv 管理 Python 3.13.11 成功发送开始和阶段邮件；winpc G0 六项训练全部成功，unique2 评测队列记录为 `QUEUE_COMPLETE`，四项退出码均为 0；旧 watchdog 状态为 `ALL_COMPLETE`/`EMAIL_SENT`；训练 GPU 当前没有残留训练任务。
+已完成项：确认轻薄本原 `.venv` 失效原因；邮件通知成功；只读核对 winpc G0 状态；提取并解析六个成功 stdout；完成四项 checkpoint 评测并导出逐样本预测；生成 seed=42、7、123 的混淆矩阵和配对比较；修复配对报告固定写成 seed=42 的标签问题；确认 unique2 配对 acc@1 三个 seed 均下降，平均差值 `-0.046986`；修正 G0 watchdog 完成后重复发送 `ALL_COMPLETE` 的条件；新增配置驱动 watchdog、checkpoint 评测队列和 `ProjectDocs/18_实验监控与邮件通知规范.md`；完成本地 PowerShell、JSON、Python 语法检查和 winpc DryRun。
+未完成项：固定 test transform 的只读复核尚未运行；本轮最终邮件尚未发送；文档和脚本尚未提交、推送私有仓库。
+阻塞与风险：轻薄本原项目 `.venv` 无法启动，当前邮件依赖临时 uv Python；独立评测的 test transform 含随机裁剪，绝对 acc@1 不能与训练末 probing 合并；当前只核实到一张 GTX 1080 Ti，不能因为暂时空闲就并行增加训练；profile 分支输出和表示变化尚未导出。
+下一步：先在 winpc 上固定 test transform 做一次只读 checkpoint 复核；如果 unique2 退化方向保持，再分析 profile 输出、原型使用分布和表示距离；在此之前不启动 100 epoch 或新的机制变体。
+
 ## 当前任务：接入 winpc watchdog 邮件通知
 
 任务名：把 `mail163.py` 的发信逻辑改为环境变量配置，并接入 winpc G0 watchdog。
@@ -11,7 +27,7 @@
 执行规模：1 个 Python 通知器、1 个 PowerShell watchdog、1 个环境变量模板、1 个 `.gitignore`、4—6 个项目记录文件；约 8 个远端只读或同步步骤。
 时间区间：约 10—20 分钟，不含 SMTP 服务响应和 GPU 训练等待。
 当前状态：G0 六项任务已全部以 `EXIT_CODE=0` 完成并生成 checkpoint。watchdog 于 12:56 判定 `ALL_COMPLETE`，状态通知为 `EMAIL_SENT`；GPU 已基本空闲。六项最终指标、运行配置和远端 checkpoint SHA256 已读取，G0 结果归档已写入 `ProjectDocs/17_G0最终结果归档.md`。
-已完成项：通知器使用 `INF_MASKING_MAIL_SMTP_HOST`、`INF_MASKING_MAIL_SMTP_PORT`、`INF_MASKING_MAIL_SENDER`、`INF_MASKING_MAIL_PASSWORD`、`INF_MASKING_MAIL_RECIPIENT`；远端秘密文件为 `C:\Users\liangyelian\secrets\InfMasking\mail.env.ps1`，已限制为当前用户；通过哈希比对发现并修正了发件人变量；远端 Python 语法、配置读取、watchdog 解析、自动注册 seed=123 UniGIR、WDDM 进程识别、测试邮件和完整状态通知均通过；本地临时秘密文件已删除。
+已完成项：通知器使用 `INF_MASKING_MAIL_SMTP_HOST`、`INF_MASKING_MAIL_SMTP_PORT`、`INF_MASKING_MAIL_SENDER`、`INF_MASKING_MAIL_PASSWORD`、`INF_MASKING_MAIL_RECIPIENT`；远端秘密文件为 `C:\Users\liangyelian\secrets\InfMasking\mail.env.ps1`，已限制为当前用户；通过哈希比对发现并修正了发件人变量；远端 Python 语法、配置读取、watchdog 解析、自动注册 seed=123 UniGIR、WDDM 进程识别、测试邮件和完整状态通知均通过；本地秘密文件保留在被 `.gitignore` 忽略的路径中，没有进入版本库。
 未完成项：邮件通知链路、六项训练、日志读取、checkpoint 哈希核对和第一版结果归档均已完成；unique2 误差和表示分析尚未完成。
 阻塞与风险：当前没有运行阻塞。主要研究风险是 synergy ROC AUC 提升与 unique2、四任务平均 acc@1 退化同时出现，不能直接进入长训练或把结果写成全面提升。
 下一步：分析 unique2 的类别级错误、混淆矩阵和表示变化；根据分析结果决定是否修改 profile 目标或保留当前主线，当前不启动 100 epoch。

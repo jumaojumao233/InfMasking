@@ -1,20 +1,20 @@
 # 项目进度
 
-## 当前任务：检查 G0 seed=7 Baseline 完成并启动 seed=7 UniGIR
+## 当前任务：检查 G0 seed=7 UniGIR 完成并启动 seed=123 Baseline
 
-任务名：检查 G0 seed=7 Baseline 的完成状态、归档 checkpoint，并启动 G0 seed=7 UniGIR。
+任务名：检查 G0 seed=7 UniGIR 的完成状态、归档 checkpoint，并启动 G0 seed=123 Baseline。
 启动时间：2026-09-25 06:56（Asia/Shanghai）
-目标：确认上一组已经正常结束，并让下一组在空闲 GPU 上脱离 SSH 会话运行。
+目标：确认 seed=7 UniGIR 已正常结束，并让 seed=123 Baseline 在空闲 GPU 上脱离 SSH 会话运行。
 目的：保持 G0 的 Baseline/UniGIR 成对协议、独立目录和可追溯 checkpoint 记录。
-做法：通过 `ssh winpc` 只读检查远端任务、进程、GPU 和日志；核对 retry checkpoint 的远端 SHA256；注册项目已有的 Windows 计划任务脚本启动 seed=7 UniGIR。
-预期结果：seed=7 UniGIR 使用固定 G0 数据和参数启动，SSH 断开后仍继续运行；上一组 checkpoint 有明确的远端哈希记录。
+做法：通过 `ssh winpc` 只读检查远端任务、进程、GPU 和日志；核对 seed=7 UniGIR checkpoint 的远端 SHA256；注册项目已有的 Windows 计划任务脚本启动 seed=123 Baseline。
+预期结果：seed=123 Baseline 使用固定 G0 数据和参数启动，SSH 断开后仍继续运行；seed=7 UniGIR 的结果和 checkpoint 有明确归档记录。
 执行规模：4 组远程只读查询、1 次本地 checkpoint 归档、1 次计划任务注册、1 次文档更新；不停止进程，不修改数据和训练代码。
 时间区间：约 10—20 分钟，不含 GPU 训练等待和 checkpoint 网络传输。
-当前状态：seed=7 Baseline retry 于 `2026-09-25 01:20:13` 以 `EXIT_CODE=0` 完成；远端 checkpoint 为 95719816 bytes，SHA256 为 `C47E587F5A70CAFD534B88B5229B1661166B01930073A0F49244504E92F370A5`。seed=7 UniGIR 已于 `2026-09-25 07:05:05` 进入 `Running`，GPU 使用约 3633 MiB。
-已完成项：确认没有残留的 Baseline 进程；确认远端 retry 的四项 probing；确认 seed=7 UniGIR 的 DataRoot、pair seed、model seed、训练 epoch、queue 和 probing 参数；确认计划任务已脱离 SSH 会话启动。
-未完成项：seed=7 UniGIR 尚未完成；seed=123 Baseline/UniGIR 尚未启动；G0 最终 test 结果尚未统一归档。
-阻塞与风险：本地 `scp` 归档不能使用半文件进行校验；seed=7 UniGIR 结束前不启动 seed=123 任务；当前仍不能根据单个 Baseline 结果下 UniGIR 方法结论。
-下一步：等待并监控 seed=7 UniGIR 的 `END` 和退出码；完成本地 checkpoint 哈希核对后，启动 seed=123 Baseline，再启动 seed=123 UniGIR。
+当前状态：seed=7 UniGIR 于 `2026-09-25 08:14:51` 写入 `END`，以 `EXIT_CODE=0` 完成；四项 probing 为 share `0.952/0.998`、unique1 `0.810/0.974`、unique2 `0.753/0.964`、synergy `0.574/0.813`，格式为 `acc@1/ROC AUC`。seed=7 UniGIR checkpoint 远端大小为 96902080 bytes，SHA256 为 `D3C467CEDE0C621C323EFACE60B335ADA38420C747F2142205FDD22F730AD9FF`。seed=123 Baseline 已于 `2026-09-25 10:28:28` 进入 `Running`，GPU 使用约 3623 MiB。
+已完成项：确认 seed=7 UniGIR 正常退出；确认四项 probing；确认 seed=7 UniGIR 的运行参数和 checkpoint 哈希；确认 seed=123 Baseline 的 DataRoot、pair seed、model seed、训练 epoch、max_size 和 probing 参数；确认计划任务已脱离 SSH 会话启动。
+未完成项：seed=7 UniGIR checkpoint 的本地传输和哈希核对仍在进行；seed=123 Baseline 尚未完成；seed=123 UniGIR 尚未启动；G0 最终 test 结果尚未统一归档。
+阻塞与风险：本地 `scp` 归档不能使用半文件进行校验；seed=123 Baseline 结束前不启动 seed=123 UniGIR；当前仍不能根据单个 seed 的结果下 G0 最终方法结论。
+下一步：等待并监控 seed=123 Baseline 的 `END` 和退出码；完成 seed=7 UniGIR checkpoint 本地哈希核对后，启动 seed=123 UniGIR。
 
 ## 当前任务：整理并上传 GitHub 私有仓库
 

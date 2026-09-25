@@ -10,9 +10,9 @@
 预期结果：得到三个 seed 的 `alpha=0.125` MOSI 结果，与已有 `alpha=0.25` 和 Baseline 逐 seed 比较。如果低权重平均下降或方向不稳定，停止继续搜索；如果保持优势，再由导师决定是否保留。无论结果如何，不启动 100 epoch，也不修改 G0 结论。
 执行规模：7 个工作切片，涉及 2 个现有 PowerShell 启动脚本、1 个 watchdog 分支、2 个独立配置、1 个计划任务脚本、1 个测试文件和 7 个研究文档；启动 3 个串行的 10 epoch MOSI 实验，不使用轻薄本训练。
 时间区间：代码、配置和静态验证约 20—40 分钟；winpc 训练和排队时间另计。
-当前状态：MOSI `profile loss weight=0.125` 的 seed=42、7、123 三项 10 epoch 对照均以 `EXIT_CODE=0` 完成，watchdog 最终状态为 `ALL_COMPLETE`，完成邮件已发送。三 seed 的平均结果为 `acc@1=0.602`、`ROC AUC=0.677`，低于原 `alpha=0.25` 的 `0.621/0.688`，但高于 Baseline 的 `0.580/0.651`。三个 checkpoint、日志、hparams 和双端 SHA256 已归档到 `outputs/g4_mosi_profile_weight_a0125/`。
+当前状态：MOSI `profile loss weight=0.125` 的 seed=42、7、123 三项 10 epoch 对照均以 `EXIT_CODE=0` 完成，watchdog 最终状态为 `ALL_COMPLETE`，完成邮件已发送。三 seed 的平均结果为 `acc@1=0.602`、`ROC AUC=0.677`，低于原 `alpha=0.25` 的 `0.621/0.688`，但高于 Baseline 的 `0.580/0.651`。三个 checkpoint、日志、hparams 和双端 SHA256 已归档到 `outputs/g4_mosi_profile_weight_a0125/`；代码、配置和文档已推送私有仓库，最新提交为 `7ad12a0`，本轮汇总邮件已发送。
 已完成项：读取 `progress.md`、实验计划、G4 协议、MOSI 启动脚本、MultiBench 入口和通用 watchdog；新增 `ProfileLossWeight` 参数、独立 watchdog 计划任务脚本、alpha=0.125 配置、seed=7/123 串行配置和测试；远端 PowerShell/JSON 解析通过；winpc 完整 31 项测试通过；DryRun、GPU 空闲检查、实验计划任务和 15 分钟邮件 watchdog 注册均已完成；seed=42、7、123 的日志、hparams、checkpoint 和双端哈希已归档；实验计划、实验记录、结果分析、研究总览、导师汇报、导师阶段汇报和 Agent 接续文档已更新。
-未完成项：提交并推送本轮代码、配置、测试和文档；整理最终论文材料和导师选择后的后续动作。
+未完成项：整理最终论文材料，并根据导师选择决定是否保留当前主线或转向新的研究问题。
 阻塞与风险：MOSI 没有 G0 的 unique2 任务，因此该对照只能检验真实任务上的总体趋势，不能直接解释 texture 类别退化；单 seed 只能做筛选，不能支持最终结论；若 GPU 有其他用户任务，必须暂停启动。
 下一步：保留 `alpha=0.25` 作为主配置，停止 loss weight、queue 和 prototype 的继续搜索；整理 G0 synergy 正向结果、unique2 退化、逐样本表示诊断和 MOSI 多 seed 结果，准备导师汇报与论文材料；不启动 100 epoch。
 

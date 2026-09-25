@@ -10,9 +10,9 @@
 预期结果：邮件通知代码、远端秘密文件、计划任务和项目文档彼此对应；邮件服务异常只记录通知失败，不中断训练队列。
 执行规模：1 个 Python 通知器、1 个 PowerShell watchdog、1 个环境变量模板、1 个 `.gitignore`、4—6 个项目记录文件；约 8 个远端只读或同步步骤。
 时间区间：约 10—20 分钟，不含 SMTP 服务响应和 GPU 训练等待。
-当前状态：watchdog 已同步并通过 Windows PowerShell 语法检查。它已识别 seed=123 Baseline 成功并自动注册 seed=123 UniGIR；12:07 的完整检查结果为 `WAIT`，GPU 只运行当前 G0 任务，状态通知为 `EMAIL_SENT`。一次 WDDM 误报已修复，修复后重新检查恢复为 `WAIT`。
+当前状态：watchdog 已同步并通过 Windows PowerShell 语法检查。它已识别 seed=123 Baseline 成功并自动注册 seed=123 UniGIR；12:41 的完整检查结果为 `WAIT`，seed=123 UniGIR 仍在运行，`last.ckpt` 已存在，GPU 只运行当前 G0 任务，状态通知为 `EMAIL_SENT`。一次 WDDM 误报已修复，修复后重新检查恢复为 `WAIT`。
 已完成项：通知器使用 `INF_MASKING_MAIL_SMTP_HOST`、`INF_MASKING_MAIL_SMTP_PORT`、`INF_MASKING_MAIL_SENDER`、`INF_MASKING_MAIL_PASSWORD`、`INF_MASKING_MAIL_RECIPIENT`；远端秘密文件为 `C:\Users\liangyelian\secrets\InfMasking\mail.env.ps1`，已限制为当前用户；通过哈希比对发现并修正了发件人变量；远端 Python 语法、配置读取、watchdog 解析、自动注册 seed=123 UniGIR、WDDM 进程识别、测试邮件和完整状态通知均通过；本地临时秘密文件已删除。
-未完成项：邮件通知链路本身已完成；G0 seed=123 UniGIR 尚未结束，最终六组结果、checkpoint 和文档归档尚未完成。
+未完成项：邮件通知链路本身已完成；G0 seed=123 UniGIR 尚未结束，最终六组结果、最终 checkpoint 校验和文档归档尚未完成。
 阻塞与风险：当前没有邮件配置阻塞。后续仍需检查训练是否以 `EXIT_CODE=0` 结束、`last.ckpt` 是否存在，以及 watchdog 是否继续保持 `WAIT` 或正确推进。
 下一步：等待 seed=123 UniGIR 完成；watchdog 每 15 分钟发送状态邮件并在成功、异常或全部完成时通知，训练结束后统一读取六组结果并更新实验记录。
 

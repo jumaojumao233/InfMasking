@@ -6,7 +6,7 @@ G3 MOSI 三 seed 已完成，UniGIR 的 acc@1 和 ROC AUC 在 3/3 个 seed 上�
 
 当前远端任务：seed=42 Baseline 与 UniGIR 已分别以 `EXIT_CODE=0` 完成。原 seed=7 Baseline 于 23:48:57 以 `EXIT_CODE=1` 退出，stderr 报告 BatchNorm 更新处的 `CUDA error: invalid argument`。retry 任务 `InfMasking-G4-G0-s7-Baseline-Retry1-liangyl` 已从原 checkpoint 的 `epoch=2`、`global_step=471` 恢复，并于 01:20:13 以 `EXIT_CODE=0` 完成。最终 probing 为 share `0.959/0.999`、unique1 `0.806/0.974`、unique2 `0.778/0.969`、synergy `0.534/0.776`。原 seed=7 失败 checkpoint 不作为完成结果使用。
 
-接续动作：seed=7 UniGIR 已于 08:14:51 以 `EXIT_CODE=0` 完成，结果为 share `0.952/0.998`、unique1 `0.810/0.974`、unique2 `0.753/0.964`、synergy `0.574/0.813`。seed=7 UniGIR checkpoint 远端 SHA256 为 `D3C467CEDE0C621C323EFACE60B335ADA38420C747F2142205FDD22F730AD9FF`。seed=123 Baseline 已以 `EXIT_CODE=0` 完成，watchdog 在 11:45 自动注册 seed=123 UniGIR，12:07 检查为 `WAIT`，状态邮件发送成功。训练结束后先检查状态日志、checkpoint 和通知结果，再统一归档 G0。
+接续动作：seed=7 UniGIR 已于 08:14:51 以 `EXIT_CODE=0` 完成，结果为 share `0.952/0.998`、unique1 `0.810/0.974`、unique2 `0.753/0.964`、synergy `0.574/0.813`。seed=7 UniGIR checkpoint 远端 SHA256 为 `D3C467CEDE0C621C323EFACE60B335ADA38420C747F2142205FDD22F730AD9FF`。seed=123 Baseline 已以 `EXIT_CODE=0` 完成，watchdog 在 11:45 自动注册 seed=123 UniGIR，12:41 检查为 `WAIT`，UniGIR checkpoint 已存在，状态邮件发送成功。训练结束后先检查状态日志、checkpoint 和通知结果，再统一归档 G0。
 
 ## 2026-09-24 当前接续状态：G3 MOSI 多 seed 完成，准备进入 G0
 

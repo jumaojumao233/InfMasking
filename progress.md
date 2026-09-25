@@ -10,11 +10,11 @@
 预期结果：轻薄本邮件通知成功；通用 watchdog 能按配置检查日志、checkpoint、任务顺序和 GPU 归属；G0 unique2 的训练日志和逐样本评测证据进入结果归档；后续行动明确为固定 test transform 的只读复核。
 执行规模：6 个工作切片，涉及 5 个 PowerShell 脚本、1 个 JSON 队列配置、3 个 Python 分析脚本、1 个训练入口、1 个测试模块和 7 个项目文档；不启动训练，不修改远端训练 checkpoint；约 40—70 分钟，不含远端评测等待和 SMTP 网络等待。
 时间区间：仅估算本轮代码、分析和文档步骤，不含 GPU 排队、远端训练和邮件网络等待。
-当前状态：本轮实现、winpc 四项只读评测和统计分析已完成，准备收尾。轻薄本已用临时 uv 管理 Python 3.13.11 成功发送开始和阶段邮件；winpc G0 六项训练全部成功，unique2 评测队列记录为 `QUEUE_COMPLETE`，四项退出码均为 0；旧 watchdog 状态为 `ALL_COMPLETE`/`EMAIL_SENT`；训练 GPU 当前没有残留训练任务。
+当前状态：本轮实现、winpc 四项只读评测、统计分析、文档更新和私有仓库推送已完成，等待发送本轮最终邮件。轻薄本已用临时 uv 管理 Python 3.13.11 成功发送开始和阶段邮件；winpc G0 六项训练全部成功，unique2 评测队列记录为 `QUEUE_COMPLETE`，四项退出码均为 0；旧 watchdog 状态为 `ALL_COMPLETE`/`EMAIL_SENT`；训练 GPU 当前没有残留训练任务。
 已完成项：确认轻薄本原 `.venv` 失效原因；邮件通知成功；只读核对 winpc G0 状态；提取并解析六个成功 stdout；完成四项 checkpoint 评测并导出逐样本预测；生成 seed=42、7、123 的混淆矩阵和配对比较；修复配对报告固定写成 seed=42 的标签问题；确认 unique2 配对 acc@1 三个 seed 均下降，平均差值 `-0.046986`；修正 G0 watchdog 完成后重复发送 `ALL_COMPLETE` 的条件；新增配置驱动 watchdog、checkpoint 评测队列和 `ProjectDocs/18_实验监控与邮件通知规范.md`；完成本地 PowerShell、JSON、Python 语法检查和 winpc DryRun。
-未完成项：固定 test transform 的只读复核尚未运行；本轮最终邮件尚未发送；文档和脚本尚未提交、推送私有仓库。
+未完成项：固定 test transform 的只读复核尚未运行；本轮最终邮件尚未发送。
 阻塞与风险：轻薄本原项目 `.venv` 无法启动，当前邮件依赖临时 uv Python；独立评测的 test transform 含随机裁剪，绝对 acc@1 不能与训练末 probing 合并；当前只核实到一张 GTX 1080 Ti，不能因为暂时空闲就并行增加训练；profile 分支输出和表示变化尚未导出。
-下一步：先在 winpc 上固定 test transform 做一次只读 checkpoint 复核；如果 unique2 退化方向保持，再分析 profile 输出、原型使用分布和表示距离；在此之前不启动 100 epoch 或新的机制变体。
+下一步：发送本轮最终邮件；后续先在 winpc 上固定 test transform 做一次只读 checkpoint 复核；如果 unique2 退化方向保持，再分析 profile 输出、原型使用分布和表示距离；在此之前不启动 100 epoch 或新的机制变体。
 
 ## 当前任务：接入 winpc watchdog 邮件通知
 

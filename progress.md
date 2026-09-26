@@ -1,6 +1,6 @@
 # 项目进度
 
-## 当前任务：修复 V3 geodesic assignment 并准备独立重跑
+## 当前任务：完成 V3 geodesic 数值修复、独立重跑与结果归档
 
 任务名：处理 G5 V3 初轮 profile assignment 数值下溢，验证修复并重跑 V3
 
@@ -12,21 +12,21 @@
 
 做法：读取最终 TensorBoard 标量和代码实现，定位 Sinkhorn 指数化下溢；在指数化前做 row-wise max subtraction；新增非零 profile 回归断言；把修复同步到空闲的 winpc，运行 geodesic 单元测试；测试通过后使用新运行名 `winpc_g5_v3_geodesic_s42_fix1`，保持 G5 数据、seed、queue、alpha、epoch 和 probing 不变。
 
-预期结果：修复后 `loss_profile`、`profile_kl`、target confidence 和 active prototypes 均为正且稳定；若重跑失败或 profile 再次为 0，停止后续扩展并记录原因。
+预期结果：修复后 `loss_profile`、`profile_kl`、target confidence 和 active prototypes 均为正且稳定；重跑完成后据此判断 V3 是否值得继续扩展。
 
 执行规模：修改 1 个损失实现、1 个单元测试、1 个调度配置和 3 个研究文档；同步 2 个代码文件到 winpc；运行 3 项远端单元测试和 1 个 10 epoch 独立 V3 短跑。
 
-时间区间：修复和测试约 5—10 分钟；V3 重跑约 60—100 分钟，不含计划任务等待和 probing 收尾。
+时间区间：修复和测试约 5—10 分钟；V3 重跑约 60—100 分钟，不含计划任务等待和 probing 收尾。本记录只用于步骤估算，不包含排队和等待。
 
-当前状态：G5 V2 与 V3 初轮均以 `EXIT_CODE=0` 完成，但 V3 的 profile assignment 全为 0，初轮结果作废。已定位并修复数值下溢；修复代码已同步到 winpc，3 项 geodesic 单元测试通过；独立重跑 `winpc_g5_v3_geodesic_s42_fix1` 已于 `09:22:22` 启动，当前 GPU 0 显存约占用 3.6 GiB，尚未结束。修复版 watchdog 已注册为每 15 分钟运行一次，09:26 首次检查为 `WAIT`，邮件返回 `EMAIL_SENT`。
+当前状态：G5 V2 与 V3 初轮均以 `EXIT_CODE=0` 完成，但 V3 的 profile assignment 全为 0，初轮结果作废。数值修复已经完成，远端 3 项 geodesic 单元测试通过；独立重跑 `winpc_g5_v3_geodesic_s42_fix1` 已于 `2026-09-26 10:32:47` 以 `EXIT_CODE=0` 完成，checkpoint 为 96,903,552 bytes，GPU 已空闲。修复版 watchdog 在 10:42 检查为 `ALL_COMPLETE`，checkpoint 和 GPU 检查通过，邮件返回 `EMAIL_SENT`。TensorBoard 证明 profile 分支有效：train/validation 的 `loss_profile` 为 `0.1007/0.1446`，`profile_kl` 为 `0.3638/0.5309`，active prototypes 为 `51.0/45.68`，graph 连通分量为 `1`，不可达 pair 为 `0`。
 
-已完成项：读取 V2/V3 最终 status、checkpoint、TensorBoard 和 GPU；确认 V2 约 96.9 MB checkpoint、V3 约 96.9 MB checkpoint；确认 V3 graph 连通分量为 1、不可达 pair 为 0；确认 V3 profile loss 和诊断为 0；完成代码修复、回归测试、调度配置和实验记录更新；修复版 watchdog 首次检查通过并发送邮件；没有停止或删除远端任务。
+已完成项：读取 V2/V3 最终 TensorBoard 和 GPU；确认 V2 与修复版 V3 checkpoint 均存在；确认修复版 V3 graph 连通分量为 1、不可达 pair 为 0；确认修复版 V3 profile loss 和诊断非零；完成代码修复、回归测试、调度配置、独立重跑和最终指标提取；更新实验记录、结果分析、Agent 接续说明、给我的说明和 V3 计划；修复版 watchdog 完成检查并发送邮件；没有停止、删除或覆盖远端任务。
 
-未完成项：完成 `winpc_g5_v3_geodesic_s42_fix1`；检查修复后的 profile 指标；更新 V2/V3 最终比较、Git 提交和邮件通知。
+未完成项：本轮技术任务已完成。V3 是否增加独立 seed 只在需要跨 seed 证据时再决定；当前没有启动新训练。
 
-阻塞与风险：远端计划任务启动需要当前用户会话和 GPU 空闲；重跑前必须保持独立目录，不能覆盖初轮结果；V3 只有在 profile 指标非零且 checkpoint 正常时才具有比较意义；本地轻薄本没有可用的 torch 环境，测试以 winpc 远端环境为准。
+阻塞与风险：V3 有效结果目前只有 seed=42、10 epoch，不能直接推出跨 seed 的一般结论；V3 在本轮四任务平均 Acc/AUC 比 V2 低 `0.0229/0.0079`，synergy AUC 低 `0.0229`，unique2 Acc 低 `0.0316`，但当前没有独立消融来定位差异来源；本地轻薄本没有可用的 torch 环境，代码回归测试以 winpc 远端环境为准。
 
-下一步：等待修复版写入第一个 checkpoint 和最终 `END`；训练完成后先检查 profile 非零条件，再读取四任务指标和 graph 指标，最后更新结果分析与接续文档。
+下一步：保持 winpc 空闲，暂不启动长训练或无目标超参数搜索。以 V2 为当前主线，保留 V3 修复版作为有效但负向的对照；如果论文需要跨 seed 证据，只增加预先指定的独立 seed，并固定本轮 graph、温度、EMA、queue、$\alpha$ 和训练预算。下一轮工作优先是独立复核文档中的数字和来源，不重新运行本次已完成实验。
 
 ## 当前任务：核验 04:30 后 G5 V2/V3 状态并收束文档
 

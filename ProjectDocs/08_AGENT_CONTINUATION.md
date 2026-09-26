@@ -1,10 +1,26 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：V3 修复版已完成，结果低于 V2
+
+G5 V3 修复版 `winpc_g5_v3_geodesic_s42_fix1` 已完成，退出码为 `0`，独立 `last.ckpt` 存在，远端 GPU 已空闲。watchdog 最终检查为 `ALL_COMPLETE`，checkpoint 检查通过，邮件返回 `EMAIL_SENT`。修复版的 geodesic profile 已实际参与训练：train/validation 的 `loss_profile` 为 `0.1007/0.1446`，`profile_kl` 为 `0.3638/0.5309`，active prototypes 为 `51.0/45.68`；graph 连通分量为 `1`，不可达 pair 为 `0`。
+
+有效配对结果如下：
+
+| 方法 | share Acc/AUC | unique1 Acc/AUC | unique2 Acc/AUC | synergy Acc/AUC | 四任务平均 Acc/AUC |
+|---|---:|---:|---:|---:|---:|
+| V2-Cosine | 0.9344 / 0.9970 | 0.8236 / 0.9762 | 0.7412 / 0.9576 | 0.5467 / 0.8164 | 0.7615 / 0.9368 |
+| V3-Geodesic 修复版 | 0.8927 / 0.9937 | 0.8111 / 0.9749 | 0.7096 / 0.9535 | 0.5408 / 0.7935 | 0.7385 / 0.9289 |
+| V3 - V2 | -0.0418 / -0.0033 | -0.0125 / -0.0013 | -0.0316 / -0.0041 | -0.0059 / -0.0229 | -0.0229 / -0.0079 |
+
+当前只支持以下结论：V3 初轮的数值故障已修复；在 seed=42、10 epoch 的同协议配对中，V3 没有优于 V2，且整体 Acc/AUC 更低。单 seed 短跑不能证明 V3 跨 seed 一定失败，也不能说明性能差异来自某一个 graph 或温度参数。
+
+后续 Agent 必须先保留这组有效结果，不得把 V3 初轮全零结果写入性能主表，也不得自动启动 100 epoch、无目标超参数搜索或多个 seed 扩展。若需要增强证据，只能使用预先指定的独立 seed，固定本轮所有 graph、温度、EMA、queue、$\alpha$ 和训练预算。默认下一步是整理 V2 主线和 V3 负向对照，而不是继续堆叠机制。
+
 ## 2026-09-26 当前接续状态：V3 初轮无效，修复版已启动
 
 G5 的 V2-Cosine 和 V3-Geodesic 初轮均以 `EXIT_CODE=0` 完成，两个 checkpoint 均存在。V2 的 profile loss 正常；V3 的 graph 连通分量为 `1`、不可达 pair 为 `0`，但 `loss_profile`、`profile_kl`、target confidence 和 active prototypes 均为 `0`。原因已经定位为 geodesic Sinkhorn 指数化下溢，初轮 V3 结果不能用于性能比较。
 
-我已在 `losses/geodesic_profile.py` 中对 Sinkhorn logits 做 row-wise max subtraction，并增加非零 profile 回归断言。修复代码已经同步到 winpc，3 项 geodesic 单元测试通过。修复版任务 `winpc_g5_v3_geodesic_s42_fix1` 已于 09:22:22 启动，使用独立目录、日志和 checkpoint，保持 G5 的 seed=42、10 epoch、queue=1024、$alpha=0.25$、`by_fit` probing 和 G0 数据不变。
+我已在 `losses/geodesic_profile.py` 中对 Sinkhorn logits 做 row-wise max subtraction，并增加非零 profile 回归断言。修复代码已经同步到 winpc，3 项 geodesic 单元测试通过。修复版任务 `winpc_g5_v3_geodesic_s42_fix1` 已于 09:22:22 启动，并于 10:32:47 以 `EXIT_CODE=0` 完成；它使用独立目录、日志和 checkpoint，保持 G5 的 seed=42、10 epoch、queue=1024、$\alpha=0.25$、`by_fit` probing 和 G0 数据不变。最终诊断和比较结果见本文顶部。
 
 后续 Agent 必须先检查修复版的 `loss_profile`、`profile_kl`、target confidence、active prototypes 和 graph 指标，再读取 synergy、unique2 和四任务平均结果。若 profile 再次为 0、出现 CUDA 错误、checkpoint 缺失或退出码非 0，暂停后续扩展，只记录失败原因。不要把初轮 V3 表格写入论文主结果，也不要扩展 seed 或启动 100 epoch。
 

@@ -1,6 +1,14 @@
 # UniGIR V2 与 V3 审计及推进计划
 
-更新时间：2026-09-25
+更新时间：2026-09-26
+
+## 0.1 2026-09-26：修复版 V3 已完成，当前结果低于 V2
+
+V3 初轮的 geodesic Sinkhorn assignment 因指数化下溢而无效。修复后，独立运行 `winpc_g5_v3_geodesic_s42_fix1` 已于 2026-09-26 10:32:47 以 `EXIT_CODE=0` 完成，`last.ckpt` 存在，GPU 已空闲。profile 分支的 train/validation `loss_profile` 为 `0.1007/0.1446`，`profile_kl` 为 `0.3638/0.5309`，active prototypes 为 `51.0/45.68`；graph 连通分量为 `1`，不可达 pair 为 `0`。
+
+在 seed=42、10 epoch、同一 G0 数据、queue、$\alpha$ 和 probing 协议下，V3-Geodesic 修复版的四任务平均 Acc/AUC 为 `0.7385/0.9289`，V2-Cosine 为 `0.7615/0.9368`。V3 相比 V2 的平均差值为 `-0.0229/-0.0079`；synergy AUC 差值为 `-0.0229`，unique2 Acc 差值为 `-0.0316`。
+
+这组结果证明修复后的 V3 可以正常训练，但没有在当前协议下带来信息增益。由于只有一个有效 seed 且预算为 10 epoch，当前不能把它写成跨 seed 的最终否定；同时也没有依据继续扩大 graph、temperature、EMA 或 loss weight 搜索。默认路线是保留 V2 主线，把 V3 作为有效的负向对照；如需增强统计证据，只增加预先指定的独立 seed，并固定其余设置。
 
 ## 0. 2026-09-26：V3 smoke 与短跑安排
 
@@ -217,7 +225,7 @@ V3 的第一版代码骨架已经实现并完成 12 项远端单元测试：
 - 记录 graph 连通分量、不可达 pair、平均度和平均边权；
 - 新增 `configs/model/unigir_geodesic.yaml`，但尚未启动 V3 训练。
 
-G5 的第一轮 V3 短跑已经完成，但不能作为有效性能结果。graph 指标正常，然而 `loss_profile`、`profile_kl`、target confidence 和活跃 prototype 均为 0。原因是 geodesic distance 在 Sinkhorn 前直接指数化，早期 logits 发生浮点下溢。现已在指数化前做 row-wise max subtraction，并增加非零 profile 回归测试；修复后远端 3 项 geodesic 单元测试通过。下一轮使用独立运行名 `winpc_g5_v3_geodesic_s42_fix1` 重跑，初轮结果不进入 V2/V3 性能比较。
+G5 的第一轮 V3 短跑已经完成，但不能作为有效性能结果。graph 指标正常，然而 `loss_profile`、`profile_kl`、target confidence 和活跃 prototype 均为 0。原因是 geodesic distance 在 Sinkhorn 前直接指数化，早期 logits 发生浮点下溢。现已在指数化前做 row-wise max subtraction，并增加非零 profile 回归测试；修复后远端 3 项 geodesic 单元测试通过。独立运行名 `winpc_g5_v3_geodesic_s42_fix1` 已完成，修复版 profile 指标非零，最终性能比较和当前决策见本文顶部。
 
 第二步是用 V3 进行短预算配对实验。第一轮只改 profile target 的距离计算，固定 V2 的 encoder、prototype 数量、EMA、queue、alpha、训练 seed 和训练预算。最小比较为：
 

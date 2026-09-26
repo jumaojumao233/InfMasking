@@ -1,5 +1,21 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：生产形状 CUDA forward/backward 诊断通过
+
+修正脚本导入路径后，计划任务 `InfMasking-Diag-CUDA-Prod-S7-Fix1-liangyl` 已于 `15:42:29` 以 `EXIT_CODE=0` 完成。它使用 winpc 的 GTX 1080 Ti、PyTorch `2.1.0+cu118`、`CUDA_LAUNCH_BLOCKING=1`、float32、seed=7，以及 `K=128、D=256、B=64、T=6、queue=1024`。graph build、full-view codes、masked profile forward、masked profile backward、端到端 forward 和端到端 backward 全部通过；graph 连通分量=`1`、不可达 pair=`0`，stderr 为空，GPU 已空闲。
+
+第一次任务失败是 `ModuleNotFoundError: losses`，原因是包装脚本从 `run_scripts` 启动时 Python 没有自动把项目根目录加入 `sys.path`。这次失败没有执行 CUDA 计算，不能当作模型或 CUDA 失败；修复路径后的 `Fix1` 才是有效诊断。
+
+后续 Agent 必须区分两类事实：生产形状独立 forward/backward 已通过；原始 seed=7 完整 V3 训练仍曾在异步条件下失败。当前不能把原错误写成已修复，也不能使用失败 checkpoint。下一步可以在新的独立目录中严格重跑原始 `10 epoch + linear probing` 条件，并保留 `CUDA_LAUNCH_BLOCKING=1`；如果再次出现非零退出或 CUDA error，立即暂停 V3 扩展；如果完成，只记录为运行链路复核，不把它当作性能配对结果。
+
+继续执行时先检查：
+
+1. `winpc_cuda_diag_logs/winpc_geodesic_production_s7_fix1.status.log` 的 `EXIT_CODE=0`；
+2. stdout 中六个 `PASS`、graph 统计和 `RESULT PASS`；
+3. winpc 没有匹配 Python 进程，GPU 已空闲；
+4. 不恢复 `winpc_g5_v3_geodesic_s7_fix1` 的失败 checkpoint；
+5. 不启动第三个 seed、100 epoch 或 V4，直到严格复核完成并更新文档。
+
 ## 2026-09-26 当前接续状态：CUDA 阻塞式短诊断成功，原错误未复现
 
 `winpc_diag_v3_geodesic_s7_cublk1` 已于 `14:43:09` 以 `EXIT_CODE=0` 完成。它使用 `CUDA_LAUNCH_BLOCKING=1`、seed=7、G0 数据、8 epoch、关闭 probing；checkpoint 存在，watchdog 判定 `ALL_COMPLETE`。stderr 没有 CUDA error，只有初始化和 DataLoader warning。

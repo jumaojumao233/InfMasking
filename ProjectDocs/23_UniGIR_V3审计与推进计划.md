@@ -2,6 +2,18 @@
 
 更新时间：2026-09-26
 
+## 0.7 2026-09-26：生产形状 CUDA forward/backward 诊断通过
+
+已在 winpc 上完成独立生产形状诊断，配置为 `K=128、D=256、B=64、T=6、queue=1024`、`graph_k=8`、`graph_anchors=4`、seed=7、float32 和 `CUDA_LAUNCH_BLOCKING=1`。运行环境为 GTX 1080 Ti、PyTorch `2.1.0+cu118`、CUDA `11.8`。
+
+graph build、full-view geodesic code、masked profile forward、masked profile backward、端到端 forward 和端到端 backward 全部通过。graph 连通分量为 `1`，不可达 pair 为 `0`，队列长度为 `1024`，退出码为 `0`，stderr 为空。
+
+这一步把此前最需要单独检查的生产形状 `torch.cdist`、`topk`、graph shortest path 和 masked backward 路径覆盖了一次，当前没有发现立即触发 CUDA 错误的算子。它仍然不能解释原始 V3 seed=7 在异步 10 epoch 训练中的非法内存访问，也不能替代真实训练时序。第一次计划任务的 `ModuleNotFoundError: losses` 属于启动路径错误，修复后没有复现。
+
+当前定位：V3 的局部 CUDA profile 计算路径已通过一次独立诊断；完整训练稳定性仍未闭环；seed=7 仍没有有效最终性能结果。
+
+下一步：在新目录中严格复跑原始 `10 epoch + linear probing` 条件，继续使用 `CUDA_LAUNCH_BLOCKING=1`，不恢复失败 checkpoint。如果再次出现非零退出或 CUDA error，停止 V3 的性能扩展；如果完整通过，只记录为运行链路复核，再决定是否需要一个新的有效 seed。V4 仍暂不实现。
+
 ## 0.6 2026-09-26：CUDA 阻塞式短诊断成功，原错误未复现
 
 独立任务 `winpc_diag_v3_geodesic_s7_cublk1` 已于 `14:43:09` 以 `EXIT_CODE=0` 完成。任务使用 seed=7、G0 数据、`max_size=10000`、queue=1024、8 epoch、关闭 probing，并设置 `CUDA_LAUNCH_BLOCKING=1`。checkpoint 大小为 `96,903,552` bytes，TensorBoard event 文件已生成，watchdog 判定 `ALL_COMPLETE` 并发送邮件。

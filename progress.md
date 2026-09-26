@@ -1,5 +1,33 @@
 # 项目进度
 
+## 当前任务：补生产形状 CUDA forward/backward 诊断
+
+任务名：定位 geodesic profile 在生产张量形状下的 CUDA 前向或反向风险
+
+启动时间：2026-09-26，Asia/Shanghai
+
+目标：使用 `K=128`、`D=256`、`B=64`、`T=6`、`queue_size=1024` 和 model seed=7，在独立进程中分别同步构图、masked distance、profile loss 和 backward，确认这些阶段是否能稳定运行。
+
+目的：上一轮 `CUDA_LAUNCH_BLOCKING=1` 的 8 epoch 训练没有复现错误，但它不能区分具体算子，也不能证明原始异步错误已经消失。本轮先做最小生产形状测试，避免直接重新消耗完整 V3 训练时间。
+
+做法：读取 `GeodesicPrototypeAlignment`、`PrototypeAlignment` 和现有 geodesic 测试；新增独立诊断入口或测试，不修改训练实现；固定随机种子，构造生产形状的完整/掩码视图；在 forward、profile loss、`loss.backward()` 和同步后分别记录；通过 SSH 在 winpc 的项目环境执行，保存 stdout/stderr 和退出码。
+
+预期结果：若全部阶段通过，说明当前实现至少能在生产形状下完成一次 CUDA backward；若失败，日志应指出最先失败的同步边界。该测试不产生论文性能结论，也不使用训练 checkpoint。
+
+执行规模：读取 3 个实现/测试文件；新增 1 个诊断测试或脚本；运行本地语法/静态检查和 1 次 winpc CUDA 诊断；更新实验记录和 Agent 接续文档；不启动长训练。预计本地准备 10—20 分钟，远端运行几分钟。
+
+时间区间：仅为执行步骤估算，不含 SSH 等待。
+
+当前状态：第一次一次性计划任务已于 `15:39:27` 以 `EXIT_CODE=1` 结束，原因是 Python 从 `run_scripts` 启动时找不到项目根目录下的 `losses` 包（`ModuleNotFoundError`）；GPU 没有开始计算。加入项目根目录到 `sys.path` 后，修复任务 `InfMasking-Diag-CUDA-Prod-S7-Fix1-liangyl` 于 `15:42:29` 以 `EXIT_CODE=0` 完成。生产形状的 graph、full-view code、masked profile forward/backward 和端到端 forward/backward 全部通过，GPU 已空闲。
+
+已完成项：确定当前不恢复失败 checkpoint、不启动第三个 seed、不实现 V4；确定优先覆盖 masked-view `torch.cdist` 及其 backward；新增 `run_scripts/geodesic_cuda_production_smoke.py`，覆盖 `K=128、D=256、B=64、T=6、queue=1024` 的 graph、full-view code、masked profile loss 和 backward；补充 queue 填充、CUDA/PyTorch/GPU 记录、行和检查及均匀 fallback 检查；新增 Windows 包装脚本；Cicero 完成一次只读测试设计审查；确认 winpc GPU 当前空闲。
+
+未完成项：严格复跑原始 `10 epoch + linear probing` 条件；判断完整训练是否仍会触发异步 CUDA error；根据结果决定是否需要新的有效 seed；将代码和文档提交到私有仓库。
+
+阻塞与风险：轻薄本的 Python/uv 环境不可用于 CUDA 诊断；远端测试必须使用独立目录和日志；第一次计划任务失败属于诊断启动问题，不是 CUDA 结果；本次生产形状诊断使用合成且已填充的队列，不能替代真实训练时序；即使本次通过，也不能证明原始 10 epoch 异步错误已经解决。
+
+下一步：先完成本地差异检查和私有仓库提交；随后在新的独立目录严格复跑原始 `10 epoch + linear probing` 条件，继续使用 `CUDA_LAUNCH_BLOCKING=1`，不恢复失败 checkpoint。若再次出现非零退出码或 CUDA error，暂停 V3 性能扩展。
+
 ## 当前任务：对 V3 seed=7 做独立 CUDA 短 smoke 诊断
 
 任务名：定位 V3-Geodesic 的 CUDA illegal memory access 首次触发位置

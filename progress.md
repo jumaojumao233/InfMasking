@@ -18,7 +18,7 @@
 
 时间区间：仅为执行步骤估算，不含远端运行和等待。
 
-当前状态：已确认上一轮 V3 seed=7 以非零退出结束，错误为 CUDA illegal memory access；已完成 V3 入口、geodesic profile 和现有测试的本地只读检查；两个 PowerShell 脚本语法通过；独立诊断任务 `InfMasking-Diag-V3-S7-CUBLK-liangyl` 已于 `14:01:18` 启动，当前计划任务为 `Running`，GPU 0 显存约 `3.6 GiB`、利用率约 `57%`，stderr 暂无 CUDA 报错；watchdog `InfMasking-Diag-V3-S7-CUBLK-Watchdog-liangyl` 已注册为每 15 分钟运行，首次动作 `WAIT`，邮件返回 `EMAIL_SENT`。
+当前状态：已确认上一轮 V3 seed=7 以非零退出结束，错误为 CUDA illegal memory access；已完成 V3 入口、geodesic profile 和现有测试的本地只读检查；两个 PowerShell 脚本语法通过；独立诊断任务 `InfMasking-Diag-V3-S7-CUBLK-liangyl` 已于 `14:01:18` 启动，最后一次检查时计划任务仍为 `Running`，GPU 0 显存约 `3719 MiB`、利用率为 `0%`，没有 `END` 或 CUDA 报错；watchdog 于 `14:13:14` 判定 `WAIT`，邮件返回 `EMAIL_SENT`。
 
 已完成项：确定 V4 暂不实现；确定 V3 失败 checkpoint 不可用于恢复；确定诊断必须使用独立目录和阻塞式 CUDA 报错；完成远端 GPU、进程、旧任务和日志只读检查；创建并启动独立诊断任务；创建并注册独立 watchdog；更新实验记录、结果分析、Agent 接续、给我的说明和 V3 审计计划；核对现有 `luna-worker.toml` 与 Codex CLI 版本；完成一次受限只读代码审查，初步把 masked-view `torch.cdist` 反向传播列为优先排查对象，同时确认这不是已证实根因。
 
@@ -26,7 +26,7 @@
 
 阻塞与风险：`CUDA_LAUNCH_BLOCKING=1` 可能改变时序并增加运行时间；如果 smoke 不复现，不能据此证明原错误消失；远端命令只允许读取、创建独立目录和启动独立任务，不停止他人进程、不删除已有结果。
 
-下一步：保持任务运行，依靠 watchdog 每 15 分钟发送状态，同时定期只读检查 `winpc_diag_v3_geodesic_s7_cublk1` 的日志和退出状态；任务结束后再决定是否做最小修复。当前不恢复失败 checkpoint、不启动第三个 seed、不实现 V4。
+下一步：依靠 watchdog 每 15 分钟发送状态，后续只读检查 `winpc_diag_v3_geodesic_s7_cublk1` 的日志和退出状态；任务结束后再决定是否做最小修复。当前不把中间 checkpoint 当最终结果，不恢复失败 checkpoint、不启动第三个 seed、不实现 V4。
 
 ## 当前任务：整理从 InfMasking 到 V4 启发的研究心路历程
 

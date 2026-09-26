@@ -2,6 +2,14 @@
 
 更新时间：2026-09-26
 
+## 0.5 2026-09-26：V3 CUDA 阻塞式短诊断已注册
+
+针对 seed=7 V3 在 epoch 7 附近的 CUDA illegal memory access，已启动独立诊断任务 `InfMasking-Diag-V3-S7-CUBLK-liangyl`，运行名为 `winpc_diag_v3_geodesic_s7_cublk1`。任务使用 G0 数据、model seed=7、pair seed=42、`max_size=10000`、queue=1024、8 epoch、GPU 0、关闭 probing，并设置 `CUDA_LAUNCH_BLOCKING=1`。
+
+当前任务于 `14:01:18` 生成 status 并进入运行状态；GPU 0 显存约 `3.6 GiB`、利用率约 `57%`，stderr 暂无 CUDA 报错。首次调用被 winpc 执行策略拦截，加入显式 `-ExecutionPolicy Bypass` 后注册并启动成功。这个执行策略问题没有修改模型代码，也没有改变已有实验。
+
+诊断任务只用于定位错误，不能产出 V3 性能结论。后续先读取阻塞式 stderr 和退出码；定位具体算子后再决定是否修复，未定位前不恢复失败 checkpoint、不启动第三个 seed、不实现 V4。
+
 ## 0.4 2026-09-26：seed=7 V3 因 CUDA 错误失败
 
 seed=7 的 V2 已正常完成，四任务平均 Acc/AUC 为 `0.7671/0.9375`。V3 在 epoch 7 附近以 `EXIT_CODE=1` 退出，错误为 `CUDA error: an illegal memory access was encountered`。失败前 profile loss、KL、active prototypes 和 graph 指标均正常，但没有最终 probing 结果，因此不能形成第二个有效 V2/V3 比较点。

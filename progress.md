@@ -1,5 +1,33 @@
 # 项目进度
 
+## 当前任务：为 V3 做第二个 seed 的同协议复核
+
+任务名：G5 V3-Geodesic seed=7 与 V2-Cosine seed=7 配对复核
+
+启动时间：2026-09-26，Asia/Shanghai
+
+目标：在不改变 G5 已验证协议的前提下，增加一个独立 model seed，判断 seed=42 中 V3 低于 V2 的结果是否具有重复性。
+
+目的：当前只有一组有效 V2/V3 配对，不能把 V3 的负向结果写成跨 seed 结论。第二个 seed 可以区分稳定趋势和单次波动，为是否继续实现 V3 或收束论文主线提供依据。
+
+做法：先只读检查 winpc 的 GPU、Python 进程、已有 G5 任务和 G0 数据目录；复制 seed=42 的 V2/V3 配置为 seed=7，保持 G0 数据、pair seed=42、10 epoch、`max_size=10000`、queue=1024、$\alpha=0.25$、graph、temperature、EMA、`by_fit` probing 和 GPU 设置不变；使用独立 run name、日志、checkpoint 和 watchdog；启动前做 JSON、PowerShell 和远端任务预检。
+
+预期结果：得到一组有效的 V2/V3 seed=7 配对结果。如果两项均成功且 profile 非零，再和 seed=42 合并分析；如果出现退出码、CUDA、checkpoint 或 watchdog 异常，暂停后续任务并保留现场。
+
+执行规模：新增 2 个 seed=7 运行配置和 1 个 watchdog 任务；远端串行运行 2 个 10 epoch 实验；完成后读取 2 个 TensorBoard 文件并更新 5—6 个研究文档。预计本地准备约 10—20 分钟，远端训练约 2—3 小时，不含排队和等待。
+
+时间区间：只用于步骤估算，不含排队、计划任务延迟和 probing 收尾时间。
+
+当前状态：已确认上一轮 V3 修复版有效但低于 V2；已读取现有 G5 配置和 watchdog 规则；seed=7 配置已创建、JSON 已通过解析、watchdog dry run 已通过。远端首个 V2 seed=7 任务于 `2026-09-26 11:14:30` 开始写入状态日志，GPU 显存约占用 3.6 GiB；V3 尚未启动，等待 V2 成功后由 watchdog 接续。
+
+已完成项：完成 seed=42 的 V2/V3 有效性核对；确认当前结论不能外推到多个 seed；确认后续必须保持协议固定，只增加独立 seed。
+
+未完成项：seed=7 V2 训练和 probing；seed=7 V3 训练和 probing；两个任务的 TensorBoard、checkpoint、watchdog 完成状态；文档、Git 和邮件收尾。
+
+阻塞与风险：第二个 seed 仍是开发阶段证据，不能替代更完整的多 seed 统计；V3 的 `profile_target_entropy` 较低，后续需要同时记录 profile 是否过度集中；两个实验必须使用独立目录，不能覆盖 seed=42 的结果。
+
+下一步：保持 watchdog 每 15 分钟检查；先等待 V2 seed=7 写入正常结束标记和 checkpoint，再核对 profile 指标并允许 V3 接续。任何退出码、CUDA 错误、checkpoint 缺失或 GPU 异常都会停止后续任务。
+
 ## 当前任务：完成 V3 geodesic 数值修复、独立重跑与结果归档
 
 任务名：处理 G5 V3 初轮 profile assignment 数值下溢，验证修复并重跑 V3

@@ -1,5 +1,13 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：seed=7 配对复核已启动
+
+seed=42 的有效 V3 低于 V2，但只有一个有效 seed。现在已按固定协议启动第二个 seed 的成对复核：V2 运行名为 `winpc_g5_v2_cosine_s7`，V3 运行名为 `winpc_g5_v3_geodesic_s7_fix1`。唯一改变是 model seed 从 `42` 改为 `7`；G0 数据、pair seed=42、10 epoch、`max_size=10000`、queue=1024、$\alpha=0.25$、graph、temperature、EMA、`by_fit` probing 和 GPU 设置均保持不变。
+
+V2 seed=7 已于 `2026-09-26 11:14:30` 开始运行，GPU 显存约占用 3.6 GiB。V3 等待 V2 成功并生成 checkpoint 后由 watchdog 自动启动。watchdog 任务为 `InfMasking-G5-V2-V3-s7-Watchdog-liangyl`，每 15 分钟运行一次。
+
+后续 Agent 必须先检查 V2 的 `END`、退出码、checkpoint 和 profile 指标，再判断是否允许 V3 启动。不得把中间 checkpoint 当最终结果；不得在本组完成前启动第三个 seed、100 epoch 或无目标超参数搜索。
+
 ## 2026-09-26 当前接续状态：V3 修复版已完成，结果低于 V2
 
 G5 V3 修复版 `winpc_g5_v3_geodesic_s42_fix1` 已完成，退出码为 `0`，独立 `last.ckpt` 存在，远端 GPU 已空闲。watchdog 最终检查为 `ALL_COMPLETE`，checkpoint 检查通过，邮件返回 `EMAIL_SENT`。修复版的 geodesic profile 已实际参与训练：train/validation 的 `loss_profile` 为 `0.1007/0.1446`，`profile_kl` 为 `0.3638/0.5309`，active prototypes 为 `51.0/45.68`；graph 连通分量为 `1`，不可达 pair 为 `0`。

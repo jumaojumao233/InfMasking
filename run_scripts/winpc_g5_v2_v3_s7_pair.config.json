@@ -1,0 +1,43 @@
+{
+  "ExperimentName": "G5-V2-V3-pair-s7",
+  "UserSuffix": "liangyl",
+  "GpuIndex": 0,
+  "AutoStart": true,
+  "DataRoot": "dataset\\data\\trifeatures_g0_seed20260924",
+  "RunRoot": "winpc_runs\\InfMasking\\bimodal_trifeatures",
+  "LogRoot": "winpc_logs",
+  "ScheduleScript": "run_scripts\\winpc_schedule_experiment.ps1",
+  "NotifyScript": "run_scripts\\winpc_g4_notify.py",
+  "NotifyPython": ".venv\\Scripts\\python.exe",
+  "MailEnvScript": "%USERPROFILE%\\secrets\\InfMasking\\mail.env.ps1",
+  "Runs": [
+    {
+      "Order": 1,
+      "TaskName": "InfMasking-G5-V2-s7-liangyl",
+      "RunName": "winpc_g5_v2_cosine_s7",
+      "Method": "unigir",
+      "Seed": 7,
+      "MaxEpochs": 10,
+      "MaxSize": 10000,
+      "PairSeed": 42,
+      "QueueSize": 1024,
+      "EnableLinearProbe": true,
+      "ShuffleProfile": false,
+      "CudaLaunchBlocking": false
+    },
+    {
+      "Order": 2,
+      "TaskName": "InfMasking-G5-V3-s7-liangyl",
+      "RunName": "winpc_g5_v3_geodesic_s7_fix1",
+      "Method": "geodesic",
+      "Seed": 7,
+      "MaxEpochs": 10,
+      "MaxSize": 10000,
+      "PairSeed": 42,
+      "QueueSize": 1024,
+      "EnableLinearProbe": true,
+      "ShuffleProfile": false,
+      "CudaLaunchBlocking": false
+    }
+  ]
+}

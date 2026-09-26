@@ -10,7 +10,13 @@ V3 初轮的 geodesic Sinkhorn assignment 因指数化下溢而无效。修复�
 
 这组结果证明修复后的 V3 可以正常训练，但没有在当前协议下带来信息增益。由于只有一个有效 seed 且预算为 10 epoch，当前不能把它写成跨 seed 的最终否定；同时也没有依据继续扩大 graph、temperature、EMA 或 loss weight 搜索。默认路线是保留 V2 主线，把 V3 作为有效的负向对照；如需增强统计证据，只增加预先指定的独立 seed，并固定其余设置。
 
-## 0. 2026-09-26：V3 smoke 与短跑安排
+## 0.2 2026-09-26：seed=7 同协议复核已启动
+
+为了判断 seed=42 的负向结果是否能够重复，已启动第二组固定协议配对实验。当前 V2 运行名为 `winpc_g5_v2_cosine_s7`，已于 11:14:30 开始；V3 运行名为 `winpc_g5_v3_geodesic_s7_fix1`，等待 V2 成功后由 watchdog 接续。除 model seed 改为 `7` 外，G0 数据、pair seed=42、10 epoch、queue=1024、$\alpha=0.25$、graph、temperature、EMA 和 probing 均不变。
+
+本轮仍然不搜索超参数，也不启动长训练。只有在 V2 和 V3 均正常完成、profile 指标非零且 checkpoint 存在后，才把 seed=7 与 seed=42 合并分析。
+
+## 0.3 2026-09-26：V3 smoke 与短跑安排
 
 V3 已完成 1 epoch smoke。smoke 使用 G0 封存数据、seed=42、`max_size=1024`、GPU 0 和独立运行目录，退出码为 0，`last.ckpt` 已生成。TensorBoard 记录的 prototype graph 指标为：连通分量数 `1`、不可达 pair 数 `0`、平均度约 `9.47`、平均边权约 `1.329`。这说明当前 `graph_k=8`、对称 k-NN、`graph_anchors=4` 的第一版实现可以完成训练和验证流程。
 

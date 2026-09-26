@@ -68,6 +68,10 @@ def spearman_relation(full_relation: np.ndarray, masked_relation: np.ndarray) ->
     masked_values = relation_upper_triangle(masked_relation)
     if full_values.size < 2:
         raise ValueError("at least two pairwise relations are required")
+    full_constant = np.allclose(full_values, full_values[0])
+    masked_constant = np.allclose(masked_values, masked_values[0])
+    if full_constant or masked_constant:
+        return 1.0 if np.allclose(full_values, masked_values) else 0.0
     result = spearmanr(full_values, masked_values)
     value = float(result.statistic)
     return value if np.isfinite(value) else 0.0

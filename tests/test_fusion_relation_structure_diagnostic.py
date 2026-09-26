@@ -19,7 +19,7 @@ class FusionRelationStructureDiagnosticTest(unittest.TestCase):
         np.testing.assert_allclose(relation_upper_triangle(relation), 0.0)
 
     def test_identical_relations_are_preserved(self):
-        embeddings = np.eye(6, dtype=np.float32)
+        embeddings = np.random.default_rng(7).normal(size=(24, 8)).astype(np.float32)
         metrics = compute_metrics(embeddings, embeddings.copy())
         self.assertAlmostEqual(metrics["spearman_relation"], 1.0)
         self.assertAlmostEqual(metrics["self_cosine"], 1.0)

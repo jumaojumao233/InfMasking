@@ -2,6 +2,12 @@
 
 更新时间：2026-09-26
 
+## 0.6 2026-09-26：CUDA 阻塞式短诊断成功，原错误未复现
+
+独立任务 `winpc_diag_v3_geodesic_s7_cublk1` 已于 `14:43:09` 以 `EXIT_CODE=0` 完成。任务使用 seed=7、G0 数据、`max_size=10000`、queue=1024、8 epoch、关闭 probing，并设置 `CUDA_LAUNCH_BLOCKING=1`。checkpoint 大小为 `96,903,552` bytes，TensorBoard event 文件已生成，watchdog 判定 `ALL_COMPLETE` 并发送邮件。
+
+这次运行没有出现 CUDA illegal memory access，因此原错误没有在阻塞式 8 epoch 条件下复现。该结果不能证明代码已经修复，也不构成 V3 的第二个有效性能结果。当前更合理的下一步是补生产形状的 CUDA forward/backward 测试，在 graph 构造、masked distance、profile loss 和 backward 后分别同步；只有测试结果清楚后，才决定是否严格复现完整 10 epoch 和 probing 条件。
+
 ## 0.5 2026-09-26：V3 CUDA 阻塞式短诊断已注册
 
 针对 seed=7 V3 在 epoch 7 附近的 CUDA illegal memory access，已启动独立诊断任务 `InfMasking-Diag-V3-S7-CUBLK-liangyl`，运行名为 `winpc_diag_v3_geodesic_s7_cublk1`。任务使用 G0 数据、model seed=7、pair seed=42、`max_size=10000`、queue=1024、8 epoch、GPU 0、关闭 probing，并设置 `CUDA_LAUNCH_BLOCKING=1`。

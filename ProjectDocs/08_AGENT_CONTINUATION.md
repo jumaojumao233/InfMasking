@@ -1,5 +1,11 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：CUDA 阻塞式短诊断成功，原错误未复现
+
+`winpc_diag_v3_geodesic_s7_cublk1` 已于 `14:43:09` 以 `EXIT_CODE=0` 完成。它使用 `CUDA_LAUNCH_BLOCKING=1`、seed=7、G0 数据、8 epoch、关闭 probing；checkpoint 存在，watchdog 判定 `ALL_COMPLETE`。stderr 没有 CUDA error，只有初始化和 DataLoader warning。
+
+这次运行只能说明错误在该条件下未复现，不能说明原始 V3 已修复，也不能把该 checkpoint 用作性能比较。后续 Agent 应先补生产形状 CUDA forward/backward 测试，并在关键阶段同步；测试前不得启动第三个 seed、恢复失败 checkpoint 或实现 V4。
+
 ## 2026-09-26 当前接续状态：V3 CUDA 阻塞式短诊断已注册
 
 seed=7 的 V3 完整运行仍以 `EXIT_CODE=1` 结束，错误为 `CUDA error: an illegal memory access was encountered`。当前没有新的完整训练任务运行，GPU 空闲。

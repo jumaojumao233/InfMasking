@@ -18,11 +18,11 @@
 
 时间区间：仅为执行步骤估算，不含 SSH 等待。
 
-当前状态：第一次一次性计划任务已于 `15:39:27` 以 `EXIT_CODE=1` 结束，原因是 Python 从 `run_scripts` 启动时找不到项目根目录下的 `losses` 包（`ModuleNotFoundError`）；GPU 没有开始计算。加入项目根目录到 `sys.path` 后，修复任务 `InfMasking-Diag-CUDA-Prod-S7-Fix1-liangyl` 于 `15:42:29` 以 `EXIT_CODE=0` 完成。严格复跑任务 `InfMasking-V3-CUDA-Strict-S7-liangyl` 仍为 `Running`，TensorBoard 最新训练 step=`1199`、epoch=`7`；checkpoint 已生成，最新修改时间 `16:29:20`，event 文件最新修改时间 `16:30:58`。当前 profile 训练 loss=`0.11338`、KL=`0.41531`、active prototypes=`53`、graph 连通分量=`1`、不可达 pair=`0`；stderr 没有 CUDA error，GPU 正在使用约 `3730 MiB / 11264 MiB`。watchdog 下一次计划检查约为 `16:37:37`。
+当前状态：第一次一次性计划任务已于 `15:39:27` 以 `EXIT_CODE=1` 结束，原因是 Python 从 `run_scripts` 启动时找不到项目根目录下的 `losses` 包（`ModuleNotFoundError`）；GPU 没有开始计算。加入项目根目录到 `sys.path` 后，修复任务 `InfMasking-Diag-CUDA-Prod-S7-Fix1-liangyl` 于 `15:42:29` 以 `EXIT_CODE=0` 完成。严格复跑任务 `InfMasking-V3-CUDA-Strict-S7-liangyl` 仍为 `Running`，TensorBoard 最新训练 step=`1449`、epoch=`9`；checkpoint 和 event 文件仍在更新，最新 checkpoint 时间为 `16:39:43`。当前 profile 训练 loss=`0.12014`、KL=`0.44735`、active prototypes=`46`；validation profile loss=`0.15607`、KL=`0.56979`、active prototypes=`44.77`；graph 连通分量=`1`、不可达 pair=`0`。stderr 没有 CUDA error，GPU 仍被任务占用约 `3731 MiB / 11264 MiB`，watchdog 下一次计划检查约为 `16:52:52`。
 
 已完成项：确定当前不恢复失败 checkpoint、不启动第三个 seed、不实现 V4；确定优先覆盖 masked-view `torch.cdist` 及其 backward；新增 `run_scripts/geodesic_cuda_production_smoke.py`，覆盖 `K=128、D=256、B=64、T=6、queue=1024` 的 graph、full-view code、masked profile loss 和 backward；补充 queue 填充、CUDA/PyTorch/GPU 记录、行和检查及均匀 fallback 检查；新增 Windows 包装脚本；Cicero 完成一次只读测试设计审查；确认 winpc GPU 当前空闲。
 
-未完成项：等待严格复跑和 probing 完成；读取最终 `END`、退出码和 checkpoint；判断完整训练是否仍会触发异步 CUDA error；根据结果决定是否需要新的有效 seed；将严格复跑结果写入实验记录和分析文档。
+未完成项：等待第 10 个 epoch、linear probing 和严格复跑收尾；读取最终 `END`、退出码和 checkpoint；判断完整训练是否仍会触发异步 CUDA error；根据结果决定是否需要新的有效 seed；将严格复跑结果写入实验记录和分析文档。
 
 阻塞与风险：轻薄本的 Python/uv 环境不可用于 CUDA 诊断；远端测试必须使用独立目录和日志；第一次计划任务失败属于诊断启动问题，不是 CUDA 结果；本次生产形状诊断使用合成且已填充的队列，不能替代真实训练时序；即使本次通过，也不能证明原始 10 epoch 异步错误已经解决。
 

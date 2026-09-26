@@ -2,6 +2,12 @@
 
 更新时间：2026-09-26
 
+## 0.4 2026-09-26：seed=7 V3 因 CUDA 错误失败
+
+seed=7 的 V2 已正常完成，四任务平均 Acc/AUC 为 `0.7671/0.9375`。V3 在 epoch 7 附近以 `EXIT_CODE=1` 退出，错误为 `CUDA error: an illegal memory access was encountered`。失败前 profile loss、KL、active prototypes 和 graph 指标均正常，但没有最终 probing 结果，因此不能形成第二个有效 V2/V3 比较点。
+
+当前应暂停后续训练。下一步只做独立目录的 `CUDA_LAUNCH_BLOCKING=1` 短 smoke，用于定位 graph 构造、`torch.cdist`、索引操作或 profile prediction 中的触发算子；定位前不直接恢复失败 checkpoint，也不启动第三个 seed。
+
 ## 0.1 2026-09-26：修复版 V3 已完成，当前结果低于 V2
 
 V3 初轮的 geodesic Sinkhorn assignment 因指数化下溢而无效。修复后，独立运行 `winpc_g5_v3_geodesic_s42_fix1` 已于 2026-09-26 10:32:47 以 `EXIT_CODE=0` 完成，`last.ckpt` 存在，GPU 已空闲。profile 分支的 train/validation `loss_profile` 为 `0.1007/0.1446`，`profile_kl` 为 `0.3638/0.5309`，active prototypes 为 `51.0/45.68`；graph 连通分量为 `1`，不可达 pair 为 `0`。

@@ -1,10 +1,18 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：seed=7 V3 失败，后续已暂停
+
+seed=7 的 V2-Cosine 已于 `12:24:38` 以 `EXIT_CODE=0` 完成，四任务平均 Acc/AUC 为 `0.7671/0.9375`。V3-Geodesic 于 `12:30:29` 启动，`13:02:52` 以 `EXIT_CODE=1` 结束；核心错误为 `CUDA error: an illegal memory access was encountered`。watchdog 已判定 `STOP`，GPU 当前空闲。
+
+V3 失败前 TensorBoard 最新 epoch 为 `7`，profile loss=`0.1185`、profile KL=`0.4459`、active prototypes=`52`，graph 连通分量=`1`、不可达 pair=`0`。这说明 profile 分支在失败前有有效数值，但该运行没有最终 probing 结果，checkpoint 不能用于方法比较或直接恢复。
+
+错误表面出现在 Lightning 指标 `.item()` 和 teardown，不能据此断定 logger 是根因，因为 CUDA kernel 错误可能异步上报。后续 Agent 必须保持后续训练暂停，不得自动重启失败任务。若继续诊断，只创建独立目录的 `CUDA_LAUNCH_BLOCKING=1` 短 smoke，先定位触发算子，再决定是否修改代码。
+
 ## 2026-09-26 当前接续状态：seed=7 配对复核已启动
 
-seed=42 的有效 V3 低于 V2，但只有一个有效 seed。现在已按固定协议启动第二个 seed 的成对复核：V2 运行名为 `winpc_g5_v2_cosine_s7`，V3 运行名为 `winpc_g5_v3_geodesic_s7_fix1`。唯一改变是 model seed 从 `42` 改为 `7`；G0 数据、pair seed=42、10 epoch、`max_size=10000`、queue=1024、$\alpha=0.25$、graph、temperature、EMA、`by_fit` probing 和 GPU 设置均保持不变。
+seed=42 的有效 V3 低于 V2，但只有一个有效 seed。随后按固定协议启动了第二个 seed 的成对复核：V2 运行名为 `winpc_g5_v2_cosine_s7`，V3 运行名为 `winpc_g5_v3_geodesic_s7_fix1`。唯一改变是 model seed 从 `42` 改为 `7`；G0 数据、pair seed=42、10 epoch、`max_size=10000`、queue=1024、$\alpha=0.25$、graph、temperature、EMA、`by_fit` probing 和 GPU 设置均保持不变。
 
-V2 seed=7 已于 `2026-09-26 11:14:30` 开始运行，11:48 的 TensorBoard 最新 epoch 为 `7`，GPU 显存约占用 3.7 GiB。stderr 目前只有框架 warning，没有 CUDA 或异常堆栈。V3 等待 V2 成功并生成最终 checkpoint 后由 watchdog 自动启动。watchdog 任务为 `InfMasking-G5-V2-V3-s7-Watchdog-liangyl`，每 15 分钟运行一次。
+V2 seed=7 已于 `2026-09-26 11:14:30` 开始运行并于 `12:24:38` 成功结束。V3 随后启动，但在 `13:02:52` 以 `EXIT_CODE=1` 结束，错误为 CUDA illegal memory access。watchdog 已判定 `STOP`；为避免重复 STOP 邮件，任务 `InfMasking-G5-V2-V3-s7-Watchdog-liangyl` 已禁用，日志和 checkpoint 保留。
 
 后续 Agent 必须先检查 V2 的 `END`、退出码、checkpoint 和 profile 指标，再判断是否允许 V3 启动。不得把中间 checkpoint 当最终结果；不得在本组完成前启动第三个 seed、100 epoch 或无目标超参数搜索。
 

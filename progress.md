@@ -1,5 +1,33 @@
 # 项目进度
 
+## 当前任务：记录 seed=7 V3 CUDA 失败并暂停后续启动
+
+任务名：核对 G5 seed=7 V2/V3 复核结果，定位 V3 非零退出和 CUDA illegal memory access
+
+启动时间：2026-09-26，Asia/Shanghai
+
+目标：确认 seed=7 V2 是否完成、V3 失败发生在哪个阶段，并避免把失败 checkpoint 或中间 TensorBoard 标量用于方法比较。
+
+目的：按照预先写下的停止条件，在出现 CUDA error 后暂停后续实验；先保存可复核的错误证据，再决定是否需要用 `CUDA_LAUNCH_BLOCKING=1` 做独立诊断。
+
+做法：只读检查远端计划任务、状态日志、GPU、Python 进程、checkpoint、watchdog、stdout/stderr 和 TensorBoard；读取 V2 的最终四任务指标与 V3 失败前的 profile 指标；不停止、不重启、不删除和不覆盖远端任务。
+
+预期结果：明确 V2 的成功状态和 V3 的失败边界；若 V3 失败原因仍不能定位，只记录诊断计划，不继续启动新的 V3 任务。
+
+执行规模：完成 1 次远端状态检查、2 次 TensorBoard 标量读取和 1 次失败日志定位；更新 5—6 个 Markdown 文档并发送 1 封状态邮件。预计本地记录约 10—20 分钟，不含后续人工决策。
+
+时间区间：只用于步骤估算，不含等待和后续诊断实验。
+
+当前状态：V2 seed=7 于 `12:24:38` 以 `EXIT_CODE=0` 完成，最终 checkpoint 存在；V3 seed=7 于 `12:30:29` 启动，`13:02:52` 以 `EXIT_CODE=1` 结束，错误为 `CUDA error: an illegal memory access was encountered`。V3 checkpoint 虽存在，但属于失败运行，不能用于最终结果或直接恢复。V3 失败前 TensorBoard 最新 epoch 为 `7`，profile loss=`0.1185`、profile KL=`0.4459`、active prototypes=`52`，graph 连通分量=`1`、不可达 pair=`0`。watchdog 于 `13:29:29` 判定 `STOP`，GPU 当前空闲；为避免重复 STOP 邮件，`InfMasking-G5-V2-V3-s7-Watchdog-liangyl` 已被禁用，日志和 checkpoint 保留。
+
+已完成项：确认 V2 seed=7 成功；提取 V2 最终四任务指标；确认 V3 失败日志和异步 CUDA 错误上下文；确认 V3 失败前 profile 分支曾经有效；确认 watchdog 已停止后续流程并发送邮件；禁用已终止实验的 watchdog，避免重复通知。
+
+未完成项：V3 seed=7 的有效最终结果；CUDA 错误的最初触发位置；是否创建带 `CUDA_LAUNCH_BLOCKING=1` 的独立低成本诊断任务；本轮失败记录的 Git 提交和邮件收尾。
+
+阻塞与风险：错误表面出现在 Lightning 指标 `.item()` 和 teardown，但 CUDA kernel 错误可能异步上报，不能据此断定 logger 是根因；V3 失败 checkpoint 不能与 V2 做性能比较；在根因未定位前继续重跑可能重复消耗 GPU 时间并掩盖问题。
+
+下一步：先把失败证据写入实验记录、结果分析、Agent 接续说明和给我的说明；保持后续任务暂停。若继续诊断，只使用独立目录和 `CUDA_LAUNCH_BLOCKING=1` 的短 smoke，先定位触发算子，再决定是否修复或重跑。
+
 ## 当前任务：为 V3 做第二个 seed 的同协议复核
 
 任务名：G5 V3-Geodesic seed=7 与 V2-Cosine seed=7 配对复核

@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+import torch
 
 from run_scripts.diagnose_fusion_relation_structure import (
     compute_metrics,
@@ -8,6 +9,11 @@ from run_scripts.diagnose_fusion_relation_structure import (
     relation_upper_triangle,
     spearman_relation,
     topk_neighbor_retention,
+)
+from run_scripts.diagnose_interaction_signature_structure import interaction_signature
+from run_scripts.diagnose_nonadditive_residual_structure import (
+    concatenate_modalities,
+    residual_from_prediction,
 )
 
 
@@ -37,6 +43,29 @@ class FusionRelationStructureDiagnosticTest(unittest.TestCase):
         relation = np.eye(4, dtype=np.float32)
         with self.assertRaises(ValueError):
             topk_neighbor_retention(relation, relation, 4)
+
+    def test_interaction_signature_contains_two_normalized_increments(self):
+        full = np.array([[3.0, 0.0], [0.0, 4.0]], dtype=np.float32)
+        mod1 = np.zeros_like(full)
+        mod2 = np.ones_like(full)
+        signature = interaction_signature(
+            torch.from_numpy(full),
+            torch.from_numpy(mod1),
+            torch.from_numpy(mod2),
+        ).numpy()
+        self.assertEqual(signature.shape, (2, 4))
+        self.assertTrue(np.allclose(np.linalg.norm(signature[:, :2], axis=1), 1.0))
+        self.assertTrue(np.allclose(np.linalg.norm(signature[:, 2:], axis=1), 1.0))
+
+    def test_residual_proxy_preserves_aligned_shapes(self):
+        mod1 = np.ones((3, 2), dtype=np.float32)
+        mod2 = np.full((3, 2), 2.0, dtype=np.float32)
+        target = np.full((3, 2), 4.0, dtype=np.float32)
+        prediction = np.full((3, 2), 3.0, dtype=np.float32)
+        features = concatenate_modalities(mod1, mod2)
+        residual = residual_from_prediction(target, prediction)
+        self.assertEqual(features.shape, (3, 4))
+        np.testing.assert_allclose(residual, 1.0)
 
 
 if __name__ == "__main__":

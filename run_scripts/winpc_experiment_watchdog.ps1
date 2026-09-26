@@ -236,7 +236,15 @@ function Get-GpuSnapshot {
             }
             $knownRun = $false
             foreach ($run in $runs) {
-                if ($commandLine -like "*$($run.RunName)*") { $knownRun = $true; break }
+                $matchTokens = @([string]$run.RunName)
+                if ($run.GpuProcessMatch) { $matchTokens += [string]$run.GpuProcessMatch }
+                foreach ($matchToken in $matchTokens) {
+                    if (-not [string]::IsNullOrWhiteSpace($matchToken) -and $commandLine -like "*$matchToken*") {
+                        $knownRun = $true
+                        break
+                    }
+                }
+                if ($knownRun) { break }
             }
             $processPath = if ($parts.Count -gt 1) { $parts[1].Trim() } else { "" }
             $processName = $processPath

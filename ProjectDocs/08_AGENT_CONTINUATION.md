@@ -1,12 +1,24 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：交互结构诊断已关闭
+
+最后一个低成本代理诊断已经完成。任务 `phase3_residual_g0_s42_20260926` 使用固定 G0 Baseline checkpoint、512 个训练 pair、256 个测试 pair、Ridge `alpha=1.0`、mask ratio=`0/0.7/0.9`、3 个 mask seed 和 3 个 masked view，于 `19:26:21` 以 `EXIT_CODE=0` 完成。结果已复制到 `outputs/phase3_nonadditive_residual_g0_s42_20260926/`，最终 watchdog 判定 `ALL_COMPLETE`，GPU 已释放，邮件已发送。
+
+关键结果：训练 `R^2=0.997824`；ratio=0.7 时 fusion/residual 的 Spearman 为 `0.985984/0.025887`，self cosine 为 `0.996943/0.202315`；ratio=0.9 时为 `0.928183/0.003104` 和 `0.986785/0.073360`。残差自身随遮挡快速失稳，不能作为稳定的跨模态协同成分代理。
+
+接续判断：阶段 1 只证明固定 checkpoint 的融合关系结构对测试时遮挡敏感，不能写成已经证明 synergy structure distortion。简单差分签名和 Ridge 非加性残差均未通过第二层阶段门。后续 Agent 不实现 V4、不继续试差分/残差代理、不启动第三个 V3 seed 或 100 epoch；先完成 V2/V3 数字审计和证据整理。若重新研究协同结构，必须先提出带反事实或信息分解依据的定义。
+
+启动链说明：正式残差诊断的 Windows 计划任务返回 `LastTaskResult=1`，没有进入 Python；两次脱离 `Start-Process` 也被 SSH 会话回收。最终保持 SSH 到任务结束的前台 wrapper 运行成功，status 日志为 `END ... EXIT_CODE=0`，输出文件完整。不要把前两次启动问题写成实验失败，也不要把计划任务的 `LastTaskResult=1` 覆盖最终诊断结果。
+
 ## 2026-09-26 当前接续状态：阶段 1 诊断完成，进入结果解释
 
 阶段 1 远端任务 `phase1_relation_g0_s42_20260926` 已于 `18:41:26` 以 `EXIT_CODE=0` 完成。固定 G0 Baseline checkpoint、256 个 pair、6 个 mask ratio、5 个 mask seed、3 个 masked view 均完成，结果已复制到 `outputs/phase1_relation_g0_s42_20260926/`；watchdog 首次检查为 `ALL_COMPLETE`，邮件已发送。
 
 核心结果：Spearman 从 ratio=0 的 `1.0000` 降到 ratio=0.9 的 `0.8466`；Top-5 从 `1.0000` 降到 `0.6048`；full-mask cosine 从 `1.0000` 降到 `0.9039`。当前只能说固定 checkpoint 存在稳定的融合关系结构敏感性和初步关系重排信号，不能说已经测到或证明了 synergy structure distortion。
 
-后续 Agent 先读取 `ProjectDocs/04_结果分析.md` 和 `ProjectDocs/25_阶段1融合关系结构诊断计划.md` 的结果段，再做数字审计。下一步优先设计普通融合结构、单模态结构和交互签名结构的对照；没有明确的协同成分定义前，不实现 V4、不扩展 V3、不启动 100 epoch。`InfMasking-Phase1-Relation-Watchdog-liangyl` 可继续每 15 分钟运行，但完成状态不会重复报告历史任务。
+简单交互增量签名的第二轮诊断也已完成。ratio=0.9 时 fusion 的 Spearman/full-mask cosine 为 `0.9282/0.9868`，interaction 为 `0.8840/0.8519`。由于 interaction 自身漂移更大，当前不能把它当成协同结构指标。后续 Agent 不得直接沿用这个签名设计 V4。
+
+后续 Agent 先读取 `ProjectDocs/04_结果分析.md` 和 `ProjectDocs/25_阶段1融合关系结构诊断计划.md` 的结果段，再做数字审计。下一步是非加性残差代理：训练 pair 上拟合 `h_ab` 对两个单模态表示的 ridge 预测，测试 pair 上分析留出残差关系。若该残差也不能与普通表示漂移区分，停止继续推进协同结构主线。没有明确的协同成分定义前，不实现 V4、不扩展 V3、不启动 100 epoch。`InfMasking-Phase1-Relation-Watchdog-liangyl` 和 phase 2 watchdog 只保留状态记录，不自动重启已完成任务。
 
 ## 2026-09-26 当前接续状态：阶段 1 融合关系结构诊断准备中
 

@@ -1,0 +1,25 @@
+{
+  "ExperimentName": "Phase2-Interaction-Signature-Diagnostic",
+  "UserSuffix": "liangyl",
+  "GpuIndex": 0,
+  "AutoStart": false,
+  "SchedulerType": "trifeatures",
+  "LogRoot": "winpc_relation_diag_logs",
+  "RunRoot": ".",
+  "ScheduleScript": "run_scripts/winpc_schedule_experiment.ps1",
+  "NotifyScript": "run_scripts/winpc_g4_notify.py",
+  "NotifyPython": ".venv/Scripts/python.exe",
+  "MailEnvScript": "%USERPROFILE%/secrets/InfMasking/mail.env.ps1",
+  "DataRoot": "dataset/data/trifeatures_g0_seed20260924",
+  "Runs": [
+    {
+      "Order": 1,
+      "TaskName": "InfMasking-Phase2-Interaction-Diag-G0-S42-liangyl",
+      "RunName": "phase2_interaction_g0_s42_20260926",
+      "GpuProcessMatch": "winpc_interaction_diag_phase2_g0_s42_20260926",
+      "Method": "diagnostic",
+      "Seed": 42,
+      "CheckpointPath": "winpc_interaction_diag_phase2_g0_s42_20260926/diagnostics.json"
+    }
+  ]
+}

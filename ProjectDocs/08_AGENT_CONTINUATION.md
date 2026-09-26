@@ -4,7 +4,7 @@
 
 seed=42 的有效 V3 低于 V2，但只有一个有效 seed。现在已按固定协议启动第二个 seed 的成对复核：V2 运行名为 `winpc_g5_v2_cosine_s7`，V3 运行名为 `winpc_g5_v3_geodesic_s7_fix1`。唯一改变是 model seed 从 `42` 改为 `7`；G0 数据、pair seed=42、10 epoch、`max_size=10000`、queue=1024、$\alpha=0.25$、graph、temperature、EMA、`by_fit` probing 和 GPU 设置均保持不变。
 
-V2 seed=7 已于 `2026-09-26 11:14:30` 开始运行，GPU 显存约占用 3.6 GiB。V3 等待 V2 成功并生成 checkpoint 后由 watchdog 自动启动。watchdog 任务为 `InfMasking-G5-V2-V3-s7-Watchdog-liangyl`，每 15 分钟运行一次。
+V2 seed=7 已于 `2026-09-26 11:14:30` 开始运行，11:48 的 TensorBoard 最新 epoch 为 `7`，GPU 显存约占用 3.7 GiB。stderr 目前只有框架 warning，没有 CUDA 或异常堆栈。V3 等待 V2 成功并生成最终 checkpoint 后由 watchdog 自动启动。watchdog 任务为 `InfMasking-G5-V2-V3-s7-Watchdog-liangyl`，每 15 分钟运行一次。
 
 后续 Agent 必须先检查 V2 的 `END`、退出码、checkpoint 和 profile 指标，再判断是否允许 V3 启动。不得把中间 checkpoint 当最终结果；不得在本组完成前启动第三个 seed、100 epoch 或无目标超参数搜索。
 

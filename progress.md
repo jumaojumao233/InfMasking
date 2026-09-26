@@ -18,15 +18,15 @@
 
 时间区间：只用于步骤估算，不含排队、计划任务延迟和 probing 收尾时间。
 
-当前状态：已确认上一轮 V3 修复版有效但低于 V2；已读取现有 G5 配置和 watchdog 规则；seed=7 配置已创建、JSON 已通过解析、watchdog dry run 已通过。远端首个 V2 seed=7 任务于 `2026-09-26 11:14:30` 开始写入状态日志，GPU 显存约占用 3.6 GiB；V3 尚未启动，等待 V2 成功后由 watchdog 接续。
+当前状态：已确认上一轮 V3 修复版有效但低于 V2；已读取现有 G5 配置和 watchdog 规则；seed=7 配置已创建、JSON 已通过解析、watchdog dry run 已通过。远端 V2 seed=7 任务于 `2026-09-26 11:14:30` 开始，11:48 的 TensorBoard 最新 epoch 为 `7`，checkpoint 最近更新时间为 `11:46:06`，GPU 显存约占用 3.7 GiB。stderr 目前只有框架 warning，没有 CUDA 或异常堆栈；watchdog 状态为 `WAIT` 并已发送邮件。V3 尚未启动，等待 V2 成功后由 watchdog 接续。
 
-已完成项：完成 seed=42 的 V2/V3 有效性核对；确认当前结论不能外推到多个 seed；确认后续必须保持协议固定，只增加独立 seed。
+已完成项：完成 seed=42 的 V2/V3 有效性核对；确认当前结论不能外推到多个 seed；确认后续必须保持协议固定，只增加独立 seed；确认 seed=7 V2 已正常进入训练并推进到 TensorBoard epoch 7；确认 watchdog、GPU、checkpoint 和 stderr 当前一致。
 
 未完成项：seed=7 V2 训练和 probing；seed=7 V3 训练和 probing；两个任务的 TensorBoard、checkpoint、watchdog 完成状态；文档、Git 和邮件收尾。
 
 阻塞与风险：第二个 seed 仍是开发阶段证据，不能替代更完整的多 seed 统计；V3 的 `profile_target_entropy` 较低，后续需要同时记录 profile 是否过度集中；两个实验必须使用独立目录，不能覆盖 seed=42 的结果。
 
-下一步：保持 watchdog 每 15 分钟检查；先等待 V2 seed=7 写入正常结束标记和 checkpoint，再核对 profile 指标并允许 V3 接续。任何退出码、CUDA 错误、checkpoint 缺失或 GPU 异常都会停止后续任务。
+下一步：保持 watchdog 每 15 分钟检查；等待 V2 seed=7 写入正常结束标记和最终 checkpoint，再核对 profile 指标并允许 V3 接续。任何退出码、CUDA 错误、checkpoint 缺失或 GPU 异常都会停止后续任务；当前 epoch 7 只作为运行进度，不作为最终结果。
 
 ## 当前任务：完成 V3 geodesic 数值修复、独立重跑与结果归档
 

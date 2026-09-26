@@ -8,6 +8,10 @@ seed=7 的 V3 完整运行仍以 `EXIT_CODE=1` 结束，错误为 `CUDA error: a
 
 当前任务状态是运行中，status 文件已生成，stderr 暂时只有 DataLoader worker 警告，没有 CUDA 报错。后续 Agent 必须先读取该运行的 status、stdout、stderr、退出码和 GPU 状态；若出现非零退出、CUDA error 或 checkpoint 缺失，继续暂停；若具体算子被定位，再单独修复和测试。不得在诊断结论前实现 V4、启动第三个 seed 或恢复失败 checkpoint。
 
+诊断 watchdog `InfMasking-Diag-V3-S7-CUBLK-Watchdog-liangyl` 已注册为每 15 分钟运行，首次状态为 `WAIT`，邮件已发送。watchdog 的 `AutoStart=false`，不会自动重启或停止诊断任务。
+
+代码审查提示：优先检查 masked-view `torch.cdist` 的 CUDA backward，并在前向、`topk`、profile loss、backward 后分别执行 `torch.cuda.synchronize()`。这是排查顺序，不是已确认根因。当前没有生产形状 CUDA backward 测试，后续若需要修复，先补最小独立测试。
+
 ## 2026-09-26 当前接续状态：seed=7 V3 失败，后续已暂停
 
 seed=7 的 V2-Cosine 已于 `12:24:38` 以 `EXIT_CODE=0` 完成，四任务平均 Acc/AUC 为 `0.7671/0.9375`。V3-Geodesic 于 `12:30:29` 启动，`13:02:52` 以 `EXIT_CODE=1` 结束；核心错误为 `CUDA error: an illegal memory access was encountered`。watchdog 已判定 `STOP`，GPU 当前空闲。

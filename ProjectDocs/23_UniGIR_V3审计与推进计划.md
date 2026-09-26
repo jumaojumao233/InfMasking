@@ -8,7 +8,11 @@
 
 当前任务于 `14:01:18` 生成 status 并进入运行状态；GPU 0 显存约 `3.6 GiB`、利用率约 `57%`，stderr 暂无 CUDA 报错。首次调用被 winpc 执行策略拦截，加入显式 `-ExecutionPolicy Bypass` 后注册并启动成功。这个执行策略问题没有修改模型代码，也没有改变已有实验。
 
+已为该诊断任务注册 `InfMasking-Diag-V3-S7-CUBLK-Watchdog-liangyl`，每 15 分钟运行一次，首次检查为 `WAIT`，邮件返回 `EMAIL_SENT`。配置使用独立运行名和 checkpoint 路径，`AutoStart=false`，不会自动重启诊断。
+
 诊断任务只用于定位错误，不能产出 V3 性能结论。后续先读取阻塞式 stderr 和退出码；定位具体算子后再决定是否修复，未定位前不恢复失败 checkpoint、不启动第三个 seed、不实现 V4。
+
+受限只读审查给出的首查对象是 masked-view 分支的 `torch.cdist` 及其反向传播：这一路使用约 `[384,256]` 的输入和 `[128,256]` 的 prototype，现有测试没有覆盖生产形状 CUDA backward。构图 `cdist` 位于 `no_grad`，且失败前 graph 统计已写出，暂列较低优先级。该审查没有访问远端，也没有确认根因。
 
 ## 0.4 2026-09-26：seed=7 V3 因 CUDA 错误失败
 

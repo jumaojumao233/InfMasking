@@ -2,6 +2,12 @@
 
 更新时间：2026-09-26
 
+## 0.9 2026-09-26：V3 暂停扩展，转做融合关系结构诊断
+
+V3 两个完成运行没有显示出相对 V2 的整体优势，也没有解决 unique2 代价。当前不继续第三个 seed、100 epoch 或 V4。新的下一步是固定 G0 InfMasking checkpoint，只在测试阶段改变 masking ratio，测量融合表示关系结构的敏感性。
+
+这项诊断不能直接证明协同结构失真。它的作用是先判断是否存在值得继续拆解的关系现象。详细协议见 [`25_阶段1融合关系结构诊断计划.md`](25_阶段1融合关系结构诊断计划.md)。
+
 ## 0.8 2026-09-26：V3 seed=7 严格复跑完成
 
 严格运行 `winpc_g5_v3_geodesic_s7_cublk1` 已于 `17:10:11` 以 `EXIT_CODE=0` 完成。运行使用 G0 数据、seed=7、pair seed=42、10 epoch、queue=1024、$\alpha=0.25$、`by_fit` probing 和 `CUDA_LAUNCH_BLOCKING=1`。四项 probing 完成，checkpoint 存在，stderr 没有 CUDA error，GPU 已空闲。

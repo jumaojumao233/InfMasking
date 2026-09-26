@@ -1,5 +1,15 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：阶段 1 融合关系结构诊断准备中
+
+当前主线已经从继续增加 UniGIR 模块转为验证一个现象：固定 InfMasking checkpoint 后，测试时遮挡增强是否系统性改变完整融合表示的样本关系。当前直接测量的是融合关系结构代理，不能写成真正的 synergy structure。
+
+后续 Agent 必须先读取 `ProjectDocs/25_阶段1融合关系结构诊断计划.md`、`ProjectDocs/03_实验记录.md` 和 `ProjectDocs/04_结果分析.md`。新增脚本为 `run_scripts/diagnose_fusion_relation_structure.py`，测试为 `tests/test_fusion_relation_structure_diagnostic.py`。运行前检查 G0 数据、固定 Baseline checkpoint、winpc GPU、已有 Python 进程和磁盘；只创建独立输出目录，不恢复旧失败 checkpoint、不修改训练代码、不启动 V4 或 V3 扩展。
+
+固定协议：G0、`Sup + biased=false + task=unique2`、固定评测变换、256 个 pair、mask ratio=`0/0.1/0.3/0.5/0.7/0.9`、mask seed=`101/202/303/404/505`。输出必须包含 `diagnostics.json`、`relation_metrics.csv`、`relation_summary.csv`、`full_relation.npy`、`full_embeddings.npy` 和样本清单。出现非零退出、CUDA error、checkpoint 缺失、样本数变化或输出缺失时暂停后续解释，并把证据写入实验记录。
+
+阶段 1 还没有结果。只有在 Spearman/Top-k 关系指标随 ratio 出现稳定趋势、跨 mask seed 方向一致，并且与 full-mask cosine 的变化可以区分时，才进入第二阶段的普通语义、单模态和交互签名比较。
+
 ## 2026-09-26 当前接续状态：V3 seed=7 严格复跑完成
 
 严格任务 `InfMasking-V3-CUDA-Strict-S7-liangyl` 已于 `17:10:11` 以 `EXIT_CODE=0` 完成。运行名为 `winpc_g5_v3_geodesic_s7_cublk1`，使用 G0 数据、model seed=7、pair seed=42、10 epoch、queue=1024、$\alpha=0.25$、`by_fit` probing 和 `CUDA_LAUNCH_BLOCKING=1`。stdout 记录 `max_epochs=10 reached`，四项 linear probing 均完成；checkpoint 为 `96,903,552` bytes，stderr 没有 CUDA error，GPU 已空闲。

@@ -217,6 +217,8 @@ V3 的第一版代码骨架已经实现并完成 12 项远端单元测试：
 - 记录 graph 连通分量、不可达 pair、平均度和平均边权；
 - 新增 `configs/model/unigir_geodesic.yaml`，但尚未启动 V3 训练。
 
+G5 的第一轮 V3 短跑已经完成，但不能作为有效性能结果。graph 指标正常，然而 `loss_profile`、`profile_kl`、target confidence 和活跃 prototype 均为 0。原因是 geodesic distance 在 Sinkhorn 前直接指数化，早期 logits 发生浮点下溢。现已在指数化前做 row-wise max subtraction，并增加非零 profile 回归测试；修复后远端 3 项 geodesic 单元测试通过。下一轮使用独立运行名 `winpc_g5_v3_geodesic_s42_fix1` 重跑，初轮结果不进入 V2/V3 性能比较。
+
 第二步是用 V3 进行短预算配对实验。第一轮只改 profile target 的距离计算，固定 V2 的 encoder、prototype 数量、EMA、queue、alpha、训练 seed 和训练预算。最小比较为：
 
 | 版本 | 需要运行的任务 | 主要问题 |

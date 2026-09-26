@@ -1,5 +1,13 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：V3 初轮无效，修复版已启动
+
+G5 的 V2-Cosine 和 V3-Geodesic 初轮均以 `EXIT_CODE=0` 完成，两个 checkpoint 均存在。V2 的 profile loss 正常；V3 的 graph 连通分量为 `1`、不可达 pair 为 `0`，但 `loss_profile`、`profile_kl`、target confidence 和 active prototypes 均为 `0`。原因已经定位为 geodesic Sinkhorn 指数化下溢，初轮 V3 结果不能用于性能比较。
+
+我已在 `losses/geodesic_profile.py` 中对 Sinkhorn logits 做 row-wise max subtraction，并增加非零 profile 回归断言。修复代码已经同步到 winpc，3 项 geodesic 单元测试通过。修复版任务 `winpc_g5_v3_geodesic_s42_fix1` 已于 09:22:22 启动，使用独立目录、日志和 checkpoint，保持 G5 的 seed=42、10 epoch、queue=1024、$alpha=0.25$、`by_fit` probing 和 G0 数据不变。
+
+后续 Agent 必须先检查修复版的 `loss_profile`、`profile_kl`、target confidence、active prototypes 和 graph 指标，再读取 synergy、unique2 和四任务平均结果。若 profile 再次为 0、出现 CUDA 错误、checkpoint 缺失或退出码非 0，暂停后续扩展，只记录失败原因。不要把初轮 V3 表格写入论文主结果，也不要扩展 seed 或启动 100 epoch。
+
 ## 2026-09-26 当前接续状态：V3 smoke 通过，V2/V3 短预算对照运行中
 
 V3-Geodesic 已经接入 `winpc` 的统一调度、独立日志、checkpoint 和 15 分钟 watchdog。1 epoch smoke 使用 G0 封存数据、model seed=42、pair seed=42、`max_size=1024`，以 `EXIT_CODE=0` 完成并生成独立的 `last.ckpt`。TensorBoard 中记录的图指标为：连通分量数 `1`、不可达 prototype pair `0`、平均度约 `9.47`、平均边权约 `1.329`。

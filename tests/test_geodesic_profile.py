@@ -33,6 +33,9 @@ class GeodesicProfileTest(unittest.TestCase):
             self.assertTrue(torch.isfinite(output[key]))
         self.assertEqual(output["graph_num_components"].item(), 1)
         self.assertEqual(output["graph_unreachable_pairs"].item(), 0)
+        self.assertGreater(output["loss"].item(), 0.0)
+        self.assertGreater(output["kl"].item(), 0.0)
+        self.assertGreater(output["target_confidence"].item(), 0.0)
 
     def test_infmasking_loss_selects_geodesic_profile(self):
         loss_fn = InfMaskingLoss(

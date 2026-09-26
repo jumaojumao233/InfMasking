@@ -145,7 +145,13 @@ class GeodesicPrototypeAlignment(PrototypeAlignment):
                 self.feature_queue[:int(self.queue_len.item())], z], dim=0)
         distances = self._geodesic_distances(source, prot)
         logits = -distances / self.geodesic_temperature
-        Q = torch.exp(logits / self.sinkhorn_eps)
+        # Geodesic distances are larger than cosine logits in the early
+        # epochs.  Stabilize before exponentiation so Sinkhorn does not turn
+        # every assignment into exact zeros through float underflow.
+        sinkhorn_logits = logits / self.sinkhorn_eps
+        sinkhorn_logits = sinkhorn_logits - sinkhorn_logits.amax(
+            dim=1, keepdim=True)
+        Q = torch.exp(sinkhorn_logits)
         eps = 1e-9
         for _ in range(self.sinkhorn_iters):
             Q = Q / Q.sum(dim=1, keepdim=True).clamp_min(eps)

@@ -1,6 +1,7 @@
 param()
 
 $ErrorActionPreference = "Stop"
+$PSNativeCommandUseErrorActionPreference = $false
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $outputRoot = Join-Path $root "outputs\scheduled_g5_0430"
 New-Item -ItemType Directory -Force -Path $outputRoot | Out-Null
@@ -18,15 +19,16 @@ $runLog = Join-Path $outputRoot "codex_0430.run.log"
 $lastMessage = Join-Path $outputRoot "codex_0430.last_message.md"
 
 $env:CODEX_HOME = Join-Path $env:USERPROFILE ".codex"
-Get-Content -LiteralPath $promptPath -Raw |
+$ErrorActionPreference = "Continue"
+Get-Content -LiteralPath $promptPath -Raw -Encoding UTF8 |
     & $codex.FullName exec `
         -C $root `
-        --ask-for-approval never `
-        -s workspace-write `
+        --approve-for-me `
         -c 'model="gpt-5.6-luna"' `
         -c 'model_reasoning_effort="max"' `
         -o $lastMessage `
-        -
+        - `
     2>&1 | Tee-Object -LiteralPath $runLog
 
-exit $LASTEXITCODE
+$codexExitCode = $LASTEXITCODE
+exit $codexExitCode

@@ -1,5 +1,89 @@
 # 项目进度
 
+## 当前任务：修复 V3 geodesic assignment 并准备独立重跑
+
+任务名：处理 G5 V3 初轮 profile assignment 数值下溢，验证修复并重跑 V3
+
+启动时间：2026-09-26，Asia/Shanghai
+
+目标：确认 G5 V3 初轮没有真正启用 geodesic profile 的原因，修复数值稳定性问题，并在独立目录中重跑同一协议。
+
+目的：避免把 profile loss 为 0 的无效 V3 结果用于 V2/V3 方法比较，保证测地关系确实参与训练后再判断研究假设。
+
+做法：读取最终 TensorBoard 标量和代码实现，定位 Sinkhorn 指数化下溢；在指数化前做 row-wise max subtraction；新增非零 profile 回归断言；把修复同步到空闲的 winpc，运行 geodesic 单元测试；测试通过后使用新运行名 `winpc_g5_v3_geodesic_s42_fix1`，保持 G5 数据、seed、queue、alpha、epoch 和 probing 不变。
+
+预期结果：修复后 `loss_profile`、`profile_kl`、target confidence 和 active prototypes 均为正且稳定；若重跑失败或 profile 再次为 0，停止后续扩展并记录原因。
+
+执行规模：修改 1 个损失实现、1 个单元测试、1 个调度配置和 3 个研究文档；同步 2 个代码文件到 winpc；运行 3 项远端单元测试和 1 个 10 epoch 独立 V3 短跑。
+
+时间区间：修复和测试约 5—10 分钟；V3 重跑约 60—100 分钟，不含计划任务等待和 probing 收尾。
+
+当前状态：G5 V2 与 V3 初轮均以 `EXIT_CODE=0` 完成，但 V3 的 profile assignment 全为 0，初轮结果作废。已定位并修复数值下溢；修复代码已同步到 winpc，3 项 geodesic 单元测试通过；独立重跑 `winpc_g5_v3_geodesic_s42_fix1` 已于 `09:22:22` 启动，当前 GPU 0 显存约占用 3.6 GiB，尚未结束。修复版 watchdog 已注册为每 15 分钟运行一次，09:26 首次检查为 `WAIT`，邮件返回 `EMAIL_SENT`。
+
+已完成项：读取 V2/V3 最终 status、checkpoint、TensorBoard 和 GPU；确认 V2 约 96.9 MB checkpoint、V3 约 96.9 MB checkpoint；确认 V3 graph 连通分量为 1、不可达 pair 为 0；确认 V3 profile loss 和诊断为 0；完成代码修复、回归测试、调度配置和实验记录更新；修复版 watchdog 首次检查通过并发送邮件；没有停止或删除远端任务。
+
+未完成项：完成 `winpc_g5_v3_geodesic_s42_fix1`；检查修复后的 profile 指标；更新 V2/V3 最终比较、Git 提交和邮件通知。
+
+阻塞与风险：远端计划任务启动需要当前用户会话和 GPU 空闲；重跑前必须保持独立目录，不能覆盖初轮结果；V3 只有在 profile 指标非零且 checkpoint 正常时才具有比较意义；本地轻薄本没有可用的 torch 环境，测试以 winpc 远端环境为准。
+
+下一步：等待修复版写入第一个 checkpoint 和最终 `END`；训练完成后先检查 profile 非零条件，再读取四任务指标和 graph 指标，最后更新结果分析与接续文档。
+
+## 当前任务：核验 04:30 后 G5 V2/V3 状态并收束文档
+
+任务名：只读检查 winpc 上的 G5 V2-Cosine/V3-Geodesic、checkpoint、TensorBoard 与 probing，并完成研究记录收束
+
+启动时间：2026-09-26，Asia/Shanghai
+
+目标：确认 04:30 之后 V2/V3 是否以 `EXIT_CODE=0` 完成，核对 `END`、最终 checkpoint、TensorBoard、synergy、unique2、四任务平均值和 V3 graph 诊断，避免把中间结果写成最终结论。
+
+目的：为 InfMasking-UniGIR 后续实验决策留下可复核的远端证据和本地接续点；若两项均完成，再按既定停止条件决定是否只保留结果或进入固定 seed 的短预算扩展。
+
+做法：先读取本进度和相关 ProjectDocs；创建并校验受限的 `luna_worker` 自定义 agent；并行检查本地 04:30 输出与 Git 状态，再通过 `ssh winpc` 做只读状态、进程、checkpoint、TensorBoard 和 watchdog 检查；根据证据更新 `ProjectDocs/03`、`04`、`08`、`09`、`11` 和本进度，最后运行文档结构检查与 `git diff --check`。不启动、停止、重启、删除或覆盖远端实验。
+
+预期结果：得到 V2/V3 当前真实状态；若两项完成则归档最终指标和 graph/probing 证据，若未完成或失败则只记录阻塞与下一步，不扩展 100 epoch 或无目标超参搜索。
+
+执行规模：约 8 个检查步骤，预计涉及 6—8 个研究文档及 1 个用户级 agent 配置；包含 1 次远端只读核验、1 次脚本/配置校验和 1 次 Git 差异检查。
+
+时间区间：本地读取和配置校验约 5—10 分钟；SSH 与文档收束约 10—30 分钟；仅为执行步骤估算，不含排队、网络和远端训练等待。
+
+当前状态：已读取项目规则、当前进度、架构/接续文档和相关结果线索；已核实本机 Codex CLI 为 `0.155.0-alpha.9.2`，当前用户配置模型为 `gpt-5.6-luna`、推理强度为 `high`；04:30 输出目录目前只有诊断消息，远端最终状态尚未复核。
+
+已完成项：完成前提检查；读取并复述已有未完成项；核对官方自定义 agent 与 `gpt-5.6-luna` 文档；读取现有 `C:\Users\breeze\.codex\config.toml`，确认尚无 `agents` 目录；确认当前仓库存在待检查的 G5 脚本和 `outputs/scheduled_g5_0430/`。
+
+未完成项：创建并验证 `luna_worker`；完成 `ssh winpc` 只读检查；确认 V2/V3 是否存在 `END`、`EXIT_CODE=0`、最终 checkpoint、TensorBoard 和 probing；更新研究文档、Git 检查、提交/推送及通知状态。
+
+阻塞与风险：消息中的部分中文损坏为 `?`，具体验收措辞未完全可读；当前远端真实状态未知；自定义 agent 写入用户级 `C:\Users\breeze\.codex\agents\` 可能需要额外权限；当前本机 `.venv` 历史上不可用，不能把本地 Python 测试结果当作远端证据。
+
+下一步：先完成用户级 agent 文件的安全写入和 Codex CLI 校验，同时委派一个只读文档证据整理子任务；随后立即执行 `ssh winpc` 状态核验。
+
+## 当前任务：修复并补执行 04:30 自动分析
+
+任务名：修复一次性 Codex 分析任务的 CLI 参数，并补执行 G5 结果检查
+
+启动时间：2026-09-26，Asia/Shanghai
+
+目标：找出 04:30 计划任务返回退出码 1 的原因，修复自动分析脚本，并在不影响远端训练的前提下补执行分析。
+
+目的：确保 G5 V2/V3 完成后能够真正读取结果、更新文档并按停止条件决定下一步。
+
+做法：检查计划任务结果、分析输出目录和本机 Codex CLI 帮助；将不受当前 CLI 支持的 `--ask-for-approval` 改为 `--approve-for-me`；完成语法检查后运行同一分析脚本，并只读检查 winpc 状态。
+
+预期结果：补执行任务能够生成分析日志和最终消息；如果远端仍未完成或存在失败，只记录并发送通知，不启动新训练。
+
+执行规模：修改 1 个 PowerShell 脚本，更新 1 个进度文件，运行 1 次自动分析，检查 1 组远端状态；不停止、不重启、不删除远端任务。
+
+时间区间：修复和静态检查约 5 分钟；自动分析约 10—30 分钟，不含 Codex 网络等待。
+
+当前状态：04:30 计划任务已经触发，但 `Last Result=1`；输出目录最初为空。已确认脚本先后存在三个启动问题：`--ask-for-approval` 不被当前版本支持，`--approve-for-me` 不能与 `-s workspace-write` 同时使用，且 PowerShell 的 `ErrorActionPreference=Stop` 会把 Codex 的 stderr 启动信息误判为异常；已修复参数、重定向和错误策略，尚未完成完整分析。
+
+已完成项：读取当前进度；确认计划任务实际运行时间为 04:30；确认没有生成分析日志；读取自动分析脚本和 CLI 帮助；确认 `codex.exe` 可定位；完成两轮补执行诊断；用最小只读提示词确认 Codex、模型参数和认证可用；完成参数、重定向和原生命令错误处理修复。
+
+未完成项：脚本语法检查；补执行自动分析；检查 winpc V2/V3 最终状态；更新研究文档、提交私有仓库和发送结果邮件。
+
+阻塞与风险：Codex 自动分析仍可能受网络、登录会话或 SSH 连接影响；远端实验状态必须先核实，分析任务不应把中间 checkpoint 当最终结果；当前计划任务为一次性任务，补执行必须先完成脚本修复后的验证。
+
+下一步：先运行 PowerShell 语法检查和 `codex exec --help` 参数核对，再补执行 `run_g5_0430_analysis.ps1`；完成后检查输出、Git 差异和邮件结果。
+
 ## 当前任务：设置 04:30 自动结果分析与后续推进
 
 任务名：为 G5 V2/V3 对照配置一次性 04:30 Codex 自动分析任务

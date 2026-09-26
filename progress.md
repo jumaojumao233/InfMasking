@@ -18,7 +18,7 @@
 
 时间区间：仅为执行步骤估算，不含远端运行和等待。
 
-当前状态：独立诊断任务 `InfMasking-Diag-V3-S7-CUBLK-liangyl` 已于 `14:43:09` 以 `EXIT_CODE=0` 完成；使用 `CUDA_LAUNCH_BLOCKING=True` 未复现非法内存访问；checkpoint 为 `96,903,552` bytes，TensorBoard event 文件已生成；watchdog 判定 `ALL_COMPLETE`，邮件返回 `EMAIL_SENT`。这只能说明错误未稳定复现，不能说明原问题已经修复。
+当前状态：独立诊断任务 `InfMasking-Diag-V3-S7-CUBLK-liangyl` 已于 `14:43:09` 以 `EXIT_CODE=0` 完成；使用 `CUDA_LAUNCH_BLOCKING=True` 未复现非法内存访问；checkpoint 为 `96,903,552` bytes，TensorBoard event 文件已生成；最新检查确认无匹配 Python 进程、GPU 利用率为 `0%`，watchdog 于 `15:13:14` 判定 `ALL_COMPLETE`，本次通知为 `SKIPPED`。这只能说明错误未稳定复现，不能说明原问题已经修复。
 
 已完成项：确定 V4 暂不实现；确定 V3 失败 checkpoint 不可用于恢复；确定诊断必须使用独立目录和阻塞式 CUDA 报错；完成远端 GPU、进程、旧任务和日志只读检查；创建并启动独立诊断任务；创建并注册独立 watchdog；更新实验记录、结果分析、Agent 接续、给我的说明和 V3 审计计划；核对现有 `luna-worker.toml` 与 Codex CLI 版本；完成一次受限只读代码审查，初步把 masked-view `torch.cdist` 反向传播列为优先排查对象，同时确认这不是已证实根因。
 

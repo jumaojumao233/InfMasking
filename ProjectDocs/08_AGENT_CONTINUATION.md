@@ -1,5 +1,13 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：阶段 1 诊断完成，进入结果解释
+
+阶段 1 远端任务 `phase1_relation_g0_s42_20260926` 已于 `18:41:26` 以 `EXIT_CODE=0` 完成。固定 G0 Baseline checkpoint、256 个 pair、6 个 mask ratio、5 个 mask seed、3 个 masked view 均完成，结果已复制到 `outputs/phase1_relation_g0_s42_20260926/`；watchdog 首次检查为 `ALL_COMPLETE`，邮件已发送。
+
+核心结果：Spearman 从 ratio=0 的 `1.0000` 降到 ratio=0.9 的 `0.8466`；Top-5 从 `1.0000` 降到 `0.6048`；full-mask cosine 从 `1.0000` 降到 `0.9039`。当前只能说固定 checkpoint 存在稳定的融合关系结构敏感性和初步关系重排信号，不能说已经测到或证明了 synergy structure distortion。
+
+后续 Agent 先读取 `ProjectDocs/04_结果分析.md` 和 `ProjectDocs/25_阶段1融合关系结构诊断计划.md` 的结果段，再做数字审计。下一步优先设计普通融合结构、单模态结构和交互签名结构的对照；没有明确的协同成分定义前，不实现 V4、不扩展 V3、不启动 100 epoch。`InfMasking-Phase1-Relation-Watchdog-liangyl` 可继续每 15 分钟运行，但完成状态不会重复报告历史任务。
+
 ## 2026-09-26 当前接续状态：阶段 1 融合关系结构诊断准备中
 
 当前主线已经从继续增加 UniGIR 模块转为验证一个现象：固定 InfMasking checkpoint 后，测试时遮挡增强是否系统性改变完整融合表示的样本关系。当前直接测量的是融合关系结构代理，不能写成真正的 synergy structure。

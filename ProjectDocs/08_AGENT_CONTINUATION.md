@@ -1,5 +1,21 @@
 # Agent 继续推进说明
 
+## 2026-09-26 当前接续状态：V3 seed=7 严格复跑完成
+
+严格任务 `InfMasking-V3-CUDA-Strict-S7-liangyl` 已于 `17:10:11` 以 `EXIT_CODE=0` 完成。运行名为 `winpc_g5_v3_geodesic_s7_cublk1`，使用 G0 数据、model seed=7、pair seed=42、10 epoch、queue=1024、$\alpha=0.25$、`by_fit` probing 和 `CUDA_LAUNCH_BLOCKING=1`。stdout 记录 `max_epochs=10 reached`，四项 linear probing 均完成；checkpoint 为 `96,903,552` bytes，stderr 没有 CUDA error，GPU 已空闲。
+
+TensorBoard final scalars：train `loss_profile=0.1137`、`profile_kl=0.4261`、active prototypes=`53`；validation `loss_profile=0.1588`、`profile_kl=0.5809`、active prototypes=`47.66`；graph 连通分量均为 `1`，不可达 pair 均为 `0`。最终 share/unique1/unique2/synergy Acc/AUC 为 `0.958/0.999`、`0.818/0.976`、`0.725/0.959`、`0.565/0.820`；四任务平均约为 `0.7666/0.9384`。
+
+当前判断：这次运行没有复现原先的 CUDA illegal memory access，可以作为第二个完成的 V3 运行和稳定性证据。由于它使用 `CUDA_LAUNCH_BLOCKING=1`，不能与 V2 写成完全同执行时序的逐位配对。结合 seed=42，V3 两 seed 四任务平均 Acc/AUC 约为 `0.7525/0.9337`，仍低于 V2 的 `0.7643/0.9372`；unique2 仍有下降。因此不启动第三个 seed、不实现 V4、不做 100 epoch 或无目标超参数搜索。
+
+后续 Agent 接手时：
+
+1. 先读取 `ProjectDocs/03_实验记录.md` 和 `ProjectDocs/04_结果分析.md` 顶部的严格复跑记录；
+2. 将 `winpc_g5_v3_geodesic_s7_cublk1` 视为已完成运行，不能当作仍在运行，也不能读取旧失败 checkpoint；
+3. 保留 strict watchdog 的日志，不再依据它启动后续实验；
+4. 先做数字审计和论文表格同步，再决定是否做一个针对 unique2 的短实验；
+5. 若新实验出现非零退出、CUDA error 或 checkpoint 缺失，立即暂停后续启动。
+
 ## 2026-09-26 当前接续状态：生产形状 CUDA forward/backward 诊断通过
 
 修正脚本导入路径后，计划任务 `InfMasking-Diag-CUDA-Prod-S7-Fix1-liangyl` 已于 `15:42:29` 以 `EXIT_CODE=0` 完成。它使用 winpc 的 GTX 1080 Ti、PyTorch `2.1.0+cu118`、`CUDA_LAUNCH_BLOCKING=1`、float32、seed=7，以及 `K=128、D=256、B=64、T=6、queue=1024`。graph build、full-view codes、masked profile forward、masked profile backward、端到端 forward 和端到端 backward 全部通过；graph 连通分量=`1`、不可达 pair=`0`，stderr 为空，GPU 已空闲。

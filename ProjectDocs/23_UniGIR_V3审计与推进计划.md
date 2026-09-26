@@ -2,6 +2,16 @@
 
 更新时间：2026-09-26
 
+## 0.8 2026-09-26：V3 seed=7 严格复跑完成
+
+严格运行 `winpc_g5_v3_geodesic_s7_cublk1` 已于 `17:10:11` 以 `EXIT_CODE=0` 完成。运行使用 G0 数据、seed=7、pair seed=42、10 epoch、queue=1024、$\alpha=0.25$、`by_fit` probing 和 `CUDA_LAUNCH_BLOCKING=1`。四项 probing 完成，checkpoint 存在，stderr 没有 CUDA error，GPU 已空闲。
+
+V3 seed=7 的四任务平均 Acc/AUC 约为 `0.7666/0.9384`，V2 seed=7 约为 `0.767/0.937`。V3 的 synergy AUC 为 `0.8198`，V2 为 `0.8127`；V3 的 unique2 Acc 为 `0.7248`，V2 为 `0.7387`。结合 seed=42，V3 两 seed 的平均结果仍低于 V2，且 unique2 代价仍然存在。
+
+这次完整运行没有复现原先的 CUDA illegal memory access，说明错误不是确定性触发；但由于开启了 `CUDA_LAUNCH_BLOCKING=1`，不能据此宣布异步错误根因已经修复。当前阶段门判断为：V3 具备两个完成运行和稳定性证据，但不进入主方法，也不继续第三个 seed、100 epoch 或 V4。
+
+strict watchdog 已关闭，日志和状态文件保留。下一步是完成 V2/V3 数字审计和论文表格同步，再决定是否只做一个有明确目标的 unique2 保护短实验。
+
 ## 0.7 2026-09-26：生产形状 CUDA forward/backward 诊断通过
 
 已在 winpc 上完成独立生产形状诊断，配置为 `K=128、D=256、B=64、T=6、queue=1024`、`graph_k=8`、`graph_anchors=4`、seed=7、float32 和 `CUDA_LAUNCH_BLOCKING=1`。运行环境为 GTX 1080 Ti、PyTorch `2.1.0+cu118`、CUDA `11.8`。
